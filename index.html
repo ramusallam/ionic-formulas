@@ -454,52 +454,78 @@ scenes.push({
 
 // ---- Step 2: Why ions matter (conductivity + heart) ----
 scenes.push({
-  seeLabel: 'Free vs locked',
-  heading: 'Step 2: Why Ions Matter — The Heart Runs on Charge',
-  notes: "<strong>The rule of free ions:</strong> an ionic compound conducts electricity only when its ions are <strong>free to move</strong> — melted or dissolved. Locked in a solid crystal they cannot carry charge, so the bulb stays dark. Your <strong>heartbeat</strong> depends on the same thing: Na<sup style=\"font-size:0.68em\">+</sup>, K<sup style=\"font-size:0.68em\">+</sup>, and Ca<sup style=\"font-size:0.68em\">2+</sup> ions moving across cell membranes. No moving ions, no current.",
-  notebook: "You saw <strong>solid</strong> salt fail to light the bulb in lab. <strong>Predict</strong> in one sentence: what has to change about the ions to make salt water light it? Then fill the mini-table — SOLID: ions ____, bulb ____; MELTED/DISSOLVED: ions ____, bulb ____.",
+  seeLabel: 'Ions & the heart',
+  heading: 'Step 2: Why Ions Matter — The Heart Runs on a K⁺ Balance',
+  notes: "<strong>Free ions carry current</strong> — that is why molten or dissolved salt lights the bulb. Your heartbeat also runs on ions, but it needs a careful <strong>balance</strong>: far more <strong>K<sup style=\"font-size:0.68em\">+</sup> inside</strong> the heart cells than in the blood outside. That gap lets each cell fire and reset in rhythm. Inject a flood of <strong>aqueous KCl</strong> into the blood and the gap disappears — K<sup style=\"font-size:0.68em\">+</sup> piles up outside, the cells cannot reset, and the heart <strong>stops</strong>.",
+  notebook: "<strong>Predict and write</strong>: normally there is far more K<sup style=\"font-size:0.68em\">+</sup> inside the heart cells than outside. If you flood the blood (outside) with aqueous KCl, what happens to that balance — and to the beat? Press <strong>Inject aqueous KCl</strong> and check, then write one sentence on <strong>why</strong> the heart stops.",
   build(stage) {
-    const { ctx } = makeCanvas(stage, 520, 300);
-    let free=false, bright=0;
-    let ions=[];
-    function layout(){ ions=[];
-      if(!free){ const cols=5,rows=4,x0=70,y0=150,dx=30,dy=28; for(let r=0;r<rows;r++)for(let c=0;c<cols;c++) ions.push({sign:((r+c)%2===0)?1:-1,hx:x0+c*dx,hy:y0+r*dy,x:x0+c*dx,y:y0+r*dy,ph:Math.random()*6.28}); }
-      else { for(let i=0;i<9;i++){ ions.push(mk(1)); ions.push(mk(-1)); } } }
-    function mk(sign){ return {sign,x:55+Math.random()*160,y:110+Math.random()*95,vx:(Math.random()-.5)*.5,vy:(Math.random()-.5)*.5}; }
-    layout();
+    const { ctx } = makeCanvas(stage, 520, 322);
+    let free=false, bright=0, injected=false, disrupt=0, tw=0;
+    // conductivity beaker ions
+    let bk=[];
+    function layoutBk(){ bk=[];
+      if(!free){ const cols=4,rows=4,x0=68,y0=118,dx=26,dy=23; for(let r=0;r<rows;r++)for(let c=0;c<cols;c++) bk.push({sign:((r+c)%2===0)?1:-1,hx:x0+c*dx,hy:y0+r*dy,x:x0+c*dx,y:y0+r*dy,ph:Math.random()*6.28}); }
+      else { for(let i=0;i<6;i++){ bk.push(fb(1)); bk.push(fb(-1)); } } }
+    function fb(s){ return {sign:s,x:52+Math.random()*128,y:104+Math.random()*92,vx:(Math.random()-.5)*.5,vy:(Math.random()-.5)*.5}; }
+    layoutBk();
+    // heart K+ ions (inside cell vs blood)
+    const memX=392, inL=266, inR=memX-9, bL=memX+9, bR=502, kTop=78, kBot=194;
+    const kions=[];
+    for(let i=0;i<11;i++) kions.push({ x:inL+8+Math.random()*(inR-inL-16), y:kTop+Math.random()*(kBot-kTop), home:'in', ix:Math.random(), bx:Math.random() });
+    function assignHomes(){ kions.forEach((k,i)=>{ k.home = injected ? (i<4?'in':'blood') : (i<9?'in':'blood'); }); }
+    kions[9].home='blood'; kions[10].home='blood';
+    // place the two baseline outside-ions on the blood side so the normal gradient reads at once
+    kions.forEach(k=>{ if(k.home==='blood') k.x = bL+10+k.bx*(bR-bL-20); });
+    const condBtn = el('button',{class:'chip'});
+    function condLbl(){ condBtn.innerHTML = (free?'Freeze the salt ':'Melt / dissolve the salt ')+ICON.zap; }
+    condBtn.addEventListener('click',()=>{ free=!free; layoutBk(); condLbl(); });
+    const injBtn = el('button',{class:'primary'});
+    function injLbl(){ injBtn.innerHTML = (injected?'Reset the heart ':'Inject aqueous KCl ')+ICON.zap; }
     const status = el('div',{class:'status-line'});
-    function setStatus(){ status.innerHTML = free ? 'Melted / dissolved: ions <strong>free to move</strong>, so the bulb glows and the heartbeat runs.' : 'Solid crystal: ions <strong>locked in place</strong>, so the bulb stays dark.'; }
-    const toggle = el('button',{class:'primary'});
-    function setLabel(){ toggle.innerHTML = (free?'Freeze it solid ':'Melt / dissolve it ')+ICON.zap; }
-    toggle.addEventListener('click',()=>{ free=!free; layout(); setLabel(); setStatus(); });
-    let hb=0;
+    function setStatus(){ status.innerHTML = injected
+      ? 'Flooded: K<sup style="font-size:0.68em">+</sup> piles up in the blood, the inside/outside <strong>balance is gone</strong>, and the heart <strong>stops</strong>.'
+      : 'Normal: far more K<sup style="font-size:0.68em">+</sup> <strong>inside</strong> the cells than outside — the heart beats in rhythm.'; }
+    injBtn.addEventListener('click',()=>{ injected=!injected; injLbl(); setStatus(); assignHomes(); });
     currentTick = (dt) => {
-      ctx.clearRect(0,0,520,300);
+      ctx.clearRect(0,0,520,322);
+      tw += dt*0.0022;
       bright += ((free?1:0)-bright)*Math.min(1,dt/240);
-      // left: beaker
-      ctx.fillStyle='#eef2f7'; roundRect(ctx,40,95,220,175,12); ctx.fill(); ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=2; roundRect(ctx,40,95,220,175,12); ctx.stroke();
-      if(free){ ctx.fillStyle='rgba(147,197,253,0.16)'; roundRect(ctx,44,120,212,146,9); ctx.fill(); }
-      // electrodes + bulb
-      ctx.fillStyle='#94a3b8'; roundRect(ctx,60,88,9,150,4); ctx.fill(); roundRect(ctx,231,88,9,150,4); ctx.fill();
-      drawBulb(ctx,150,58,bright);
-      const b=[52,248,112,262];
-      ions.forEach(p=>{ if(!free){ p.ph+=dt*0.01; drawIonBall(ctx,p.hx+Math.sin(p.ph)*1.6,p.hy+Math.cos(p.ph)*1.6,'',p.sign,10); } else { driftFree(p,dt,b,p.sign>0?64:236); drawIonBall(ctx,p.x,p.y,'',p.sign,10); } });
-      ctx.textAlign='center'; ctx.font='700 10px Roboto Mono'; ctx.fillStyle='#57534e'; ctx.fillText(free?'FREE IONS':'LOCKED LATTICE',150,258);
-      // right: heart monitor
-      ctx.fillStyle='#0f172a'; roundRect(ctx,300,95,190,120,10); ctx.fill();
-      hb += dt*(free?0.004:0.0006);
-      const midY=155, amp=free?34:5;
-      ctx.strokeStyle=free?'#34d399':'#64748b'; ctx.lineWidth=2.2; ctx.lineJoin='round'; ctx.beginPath();
-      for(let i=0;i<120;i++){ const x=305+i*(180/119); const ph=((hb-(119-i)*0.05)%1+1)%1;
-        let v=0; if(ph<0.12)v=Math.sin(ph/0.12*Math.PI)*0.12; else if(ph<0.18)v=-(ph-0.12)/0.06*0.3; else if(ph<0.24)v=(ph-0.18)/0.06*1.05-0.3; else if(ph<0.30)v=1.05-(ph-0.24)/0.06*1.35; else if(ph<0.36)v=-0.3+(ph-0.30)/0.06*0.3; else if(ph<0.55)v=Math.sin((ph-0.36)/0.19*Math.PI)*0.2;
-        const y=midY-v*amp; i?ctx.lineTo(x,y):ctx.moveTo(x,y); }
+      disrupt += ((injected?1:0)-disrupt)*Math.min(1,dt/380);
+      // ----- LEFT: conductivity beaker -----
+      ctx.fillStyle='#eef2f7'; roundRect(ctx,40,78,196,168,12); ctx.fill(); ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=2; roundRect(ctx,40,78,196,168,12); ctx.stroke();
+      if(free){ ctx.fillStyle='rgba(147,197,253,0.16)'; roundRect(ctx,44,100,188,142,9); ctx.fill(); }
+      ctx.fillStyle='#94a3b8'; roundRect(ctx,58,72,8,150,4); ctx.fill(); roundRect(ctx,210,72,8,150,4); ctx.fill();
+      drawBulb(ctx,138,50,bright);
+      const bb=[50,226,96,238];
+      bk.forEach(p=>{ if(!free){ p.ph+=dt*0.01; drawIonBall(ctx,p.hx+Math.sin(p.ph)*1.5,p.hy+Math.cos(p.ph)*1.5,'',p.sign,9); } else { driftFree(p,dt,bb,p.sign>0?62:214); drawIonBall(ctx,p.x,p.y,'',p.sign,9); } });
+      ctx.textAlign='center'; ctx.font='700 9px Roboto Mono'; ctx.fillStyle='#57534e'; ctx.fillText(free?'FREE IONS → BULB LIT':'LOCKED → BULB DARK',138,236);
+      // ----- RIGHT: heart-cell membrane -----
+      ctx.fillStyle='rgba(99,102,241,0.06)'; roundRect(ctx,262,66,memX-262-4,150,8); ctx.fill();
+      ctx.fillStyle='rgba(239,68,68,0.05)'; roundRect(ctx,memX+4,66,bR-(memX+4),150,8); ctx.fill();
+      ctx.fillStyle='#a8a29e'; roundRect(ctx,memX-4,66,8,150,3); ctx.fill();
+      ctx.textAlign='center'; ctx.font='700 9px Roboto Mono'; ctx.fillStyle='#6366f1'; ctx.fillText('INSIDE CELL',322,60); ctx.fillStyle='#ef4444'; ctx.fillText('BLOOD',450,60);
+      let cin=0, cout=0;
+      kions.forEach(k=>{ const toBlood=k.home==='blood';
+        const tx = toBlood ? bL+10+k.bx*(bR-bL-20) : inL+10+k.ix*(inR-inL-20);
+        k.x += (tx-k.x)*0.09; k.y += Math.sin(tw*3+k.x)*0.35;
+        if(k.y<kTop)k.y=kTop; if(k.y>kBot)k.y=kBot;
+        if(k.x<memX) cin++; else cout++;
+        drawIonBall(ctx,k.x,k.y,'K',1,8);
+      });
+      ctx.font='700 11px Roboto Mono'; ctx.fillStyle='#6366f1'; ctx.fillText('K⁺ × '+cin, 322, 208); ctx.fillStyle='#ef4444'; ctx.fillText('K⁺ × '+cout, 450, 208);
+      // ----- BOTTOM: ECG strip -----
+      ctx.fillStyle='#0f172a'; roundRect(ctx,40,258,462,56,10); ctx.fill();
+      const sc = 19*(1-disrupt);
+      ctx.strokeStyle = disrupt>0.5?'#f87171':'#34d399'; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.beginPath();
+      for(let i=0;i<150;i++){ const x=46+i*(450/149); const ph=(((tw-(149-i)*0.024)%1)+1)%1;
+        let v=0; if(ph<0.10)v=Math.sin(ph/0.10*Math.PI)*0.14; else if(ph<0.15)v=-(ph-0.10)/0.05*0.28; else if(ph<0.20)v=(ph-0.15)/0.05*1.05-0.28; else if(ph<0.25)v=1.05-(ph-0.20)/0.05*1.4; else if(ph<0.30)v=-0.35+(ph-0.25)/0.05*0.35; else if(ph<0.55)v=Math.sin((ph-0.30)/0.25*Math.PI)*0.22;
+        const y=288-v*sc; i?ctx.lineTo(x,y):ctx.moveTo(x,y); }
       ctx.stroke();
-      ctx.fillStyle='#94a3b8'; ctx.textAlign='center'; ctx.font='700 9px Roboto Mono'; ctx.fillText('HEART · IONS ON THE MOVE',395,205);
-      ctx.fillStyle=free?'#059669':'#94a3b8'; ctx.fillText(free?'BEATING':'FLAT',395,88);
+      ctx.textAlign='left'; ctx.font='700 9px Roboto Mono'; ctx.fillStyle=disrupt>0.5?'#f87171':'#34d399'; ctx.fillText(disrupt>0.5?'HEART STOPPED':'STEADY RHYTHM', 50, 272);
     };
-    setLabel(); setStatus();
-    stage.append(el('div',{class:'tool-row'},[toggle]), status,
-      el('div',{class:'caption'},'Same rule in a beaker and in a chest — current is ions on the move.'));
+    condLbl(); injLbl(); setStatus();
+    stage.append(el('div',{class:'tool-row'},[condBtn, injBtn]), status,
+      el('div',{class:'caption'},'Free ions carry current in the beaker. But flooding the blood with K⁺ erases the balance your heartbeat needs.'));
   }
 });
 
