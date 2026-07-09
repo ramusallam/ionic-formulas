@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Writing Ionic Formulas</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Roboto+Mono:wght@400;700&family=Roboto+Serif:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bgMain: #F7F3EE; --bgPanel: #FFFFFF; --bgCard: #FFFFFF;
+    --accentBlue: #6366f1; --accentBlueHover: #4f46e5; --accentPurple: #a855f7;
+    --accentGreen: #10b981; --accentRed: #ef4444; --accentYellow: #f59e0b;
+    --textPrimary: #1C1917; --textSecondary: #57534E; --textWarm: #2A2520;
+    --textWarmSecondary: #7C6F5A; --textWarmMuted: #A0937B;
+    --borderColor: #E8E0D2; --borderSubtle: #F0EBE3;
+    --shadow-sm: 0 1px 2px rgba(17,17,17,0.04), 0 1px 3px rgba(17,17,17,0.06);
+    --shadow-md: 0 4px 12px rgba(17,17,17,0.06), 0 2px 4px rgba(17,17,17,0.04);
+    --shadow-lg: 0 16px 40px rgba(17,17,17,0.10), 0 4px 12px rgba(17,17,17,0.06);
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-serif: 'Roboto Serif', Georgia, Cambria, serif;
+    --font-mono: 'Roboto Mono', monospace;
+    --note-bg: #fdf1c6; --note-ink: #2a1e08; --note-head: #7a3a00;
+    --cation: #d97706; --anion: #0d9488;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); background: var(--bgMain); color: var(--textPrimary); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+  header { padding: 12px 32px 8px; max-width: 1340px; margin: 0 auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+  header .titles .eyebrow { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accentBlue); margin-bottom: 3px; }
+  header .titles h1 { font-family: var(--font-serif); font-weight: 700; font-size: 20px; color: var(--textWarm); margin: 0; letter-spacing: 0.2px; }
+  .progress-track { max-width: 1340px; margin: 0 auto; padding: 0 32px; }
+  .progress-track .bar { height: 4px; background: var(--borderSubtle); border-radius: 999px; overflow: hidden; }
+  .progress-track .fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accentBlue), var(--accentPurple)); border-radius: 999px; transition: width 350ms ease; }
+  .step-line { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; margin-bottom: 8px; }
+  .step-line .now { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+  .step-line .num { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accentBlue); white-space: nowrap; }
+  .step-line .ttl { font-family: var(--font-serif); font-size: 14px; font-weight: 700; color: var(--textWarm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .step-line .count { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: var(--textWarmMuted); white-space: nowrap; }
+  main { max-width: 1340px; margin: 0 auto; padding: 12px 32px 20px; }
+  .workspace { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(340px, 0.92fr); gap: 26px; align-items: start; }
+  .stage { background: var(--bgCard); border: 1px solid var(--borderColor); border-top: 4px solid var(--accentBlue); border-radius: 16px; box-shadow: var(--shadow-md); padding: 16px 18px; min-height: 440px; display: flex; flex-direction: column; animation: fadeUp 0.4s ease-out; }
+  .stage-label { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accentBlue); margin-bottom: 12px; }
+  .stage-body { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 10px; }
+  canvas { display: block; width: 100%; height: auto; border-radius: 12px; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .side { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 12px; }
+  .notes-card { background: var(--note-bg); color: var(--note-ink); padding: 16px 22px 14px; border-radius: 14px; font-size: 15px; line-height: 1.58; box-shadow: var(--shadow-sm); animation: fadeUp 0.4s ease-out; }
+  .notes-card .nc-tag { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--note-head); margin-bottom: 6px; }
+  .step-heading { font-family: var(--font-serif); font-weight: 700; font-size: 17px; color: var(--note-head); margin-bottom: 6px; }
+  .notes-card p { margin: 0; }
+  .notes-card strong { font-weight: 700; color: var(--note-ink); }
+  .notebook-prompt { background: #fff; border: 1px solid var(--borderColor); border-left: 4px solid var(--accentBlue); border-radius: 12px; padding: 13px 16px; display: flex; align-items: flex-start; gap: 11px; font-size: 14px; line-height: 1.5; color: var(--textSecondary); box-shadow: var(--shadow-sm); }
+  .notebook-prompt .np-tag { flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.12em; padding: 4px 8px; background: var(--accentBlue); color: #fff; border-radius: 6px; margin-top: 1px; }
+  .notebook-prompt strong { color: var(--textPrimary); font-weight: 700; }
+  nav { margin-top: auto; display: flex; justify-content: space-between; gap: 12px; padding-top: 4px; }
+  button { font-family: var(--font-sans); font-size: 14px; font-weight: 600; padding: 11px 20px; border-radius: 10px; border: 1px solid var(--borderColor); background: #fff; color: var(--textPrimary); cursor: pointer; transition: background 140ms, border-color 140ms, transform 50ms, box-shadow 140ms; }
+  button:hover:not(:disabled) { background: var(--bgMain); border-color: var(--textWarmMuted); }
+  button:active:not(:disabled) { transform: translateY(1px); }
+  button:disabled { opacity: 0.35; cursor: not-allowed; }
+  button.primary { background: var(--accentBlue); color: #fff; border-color: var(--accentBlue); box-shadow: 0 4px 14px rgba(99,102,241,0.28); }
+  button.primary:hover:not(:disabled) { background: var(--accentBlueHover); border-color: var(--accentBlueHover); }
+  .btn-group { display: flex; gap: 10px; }
+  .tool-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .chip { font-family: var(--font-sans); font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--borderColor); background: #fff; color: var(--textPrimary); cursor: pointer; transition: all 140ms; }
+  .chip:hover { border-color: var(--accentBlue); }
+  .chip.active { background: var(--accentBlue); color: #fff; border-color: var(--accentBlue); }
+  .eyebrow-sm { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--textWarmMuted); }
+  .diff-pill { display: inline-block; font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; }
+  .diff-simple { color: #166534; background: rgba(16,185,129,0.14); }
+  .diff-challenge { color: #9a3412; background: rgba(245,158,11,0.16); }
+  .caption { font-style: italic; font-size: 12px; color: var(--textWarmMuted); text-align: center; }
+  .status-line { font-family: var(--font-sans); font-size: 14px; font-weight: 600; color: var(--textPrimary); text-align: center; line-height: 1.45; min-height: 22px; }
+  .status-line.complete { color: #166534; }
+  button svg, .status-line svg { vertical-align: -2px; }
+
+  /* formula + ion chips */
+  .formula { font-family: var(--font-serif); font-weight: 700; letter-spacing: 0.5px; }
+  .formula sub { font-size: 0.62em; }
+  .ion-chip { display: inline-flex; align-items: baseline; gap: 1px; font-family: var(--font-serif); font-weight: 700; padding: 6px 12px; border-radius: 10px; font-size: 20px; }
+  .ion-chip sup { font-size: 0.6em; font-family: var(--font-mono); }
+  .ion-chip sub { font-size: 0.62em; }
+  .ion-chip.cat { background: rgba(217,119,6,0.12); color: #b45309; border: 1px solid rgba(217,119,6,0.35); }
+  .ion-chip.an { background: rgba(13,148,136,0.12); color: #0f766e; border: 1px solid rgba(13,148,136,0.35); }
+
+  /* method machine */
+  .machine { display: flex; flex-direction: column; gap: 12px; }
+  .m-name { text-align: center; font-family: var(--font-serif); font-size: 20px; font-weight: 700; color: var(--textWarm); }
+  .m-name .cat-w { color: #b45309; } .m-name .an-w { color: #0f766e; }
+  .move { background: var(--bgMain); border: 1px solid var(--borderColor); border-left: 4px solid var(--accentBlue); border-radius: 12px; padding: 12px 16px; animation: fadeUp 0.3s ease-out; }
+  .move .m-lab { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accentBlue); margin-bottom: 6px; }
+  .move .m-body { font-size: 15px; line-height: 1.5; color: var(--textPrimary); display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .lcm-badge { font-family: var(--font-mono); font-weight: 700; background: var(--accentYellow); color: #422006; padding: 4px 10px; border-radius: 8px; }
+  .m-final { text-align: center; padding: 14px; border-radius: 14px; background: rgba(16,185,129,0.10); border: 1px solid rgba(16,185,129,0.4); }
+  .m-final .big { font-family: var(--font-serif); font-weight: 700; font-size: 40px; color: var(--textWarm); }
+  .m-final .big sub { font-size: 0.6em; }
+  .m-final .ok { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #166534; margin-top: 4px; }
+  .m-wrong { text-align: center; margin-top: 8px; font-family: var(--font-serif); font-size: 22px; color: var(--textWarmMuted); position: relative; display: inline-block; }
+  .m-wrong .strike { position: absolute; left: -6px; right: -6px; top: 52%; height: 3px; background: var(--accentRed); transform: scaleX(0); transform-origin: left; animation: strike 0.5s ease-out forwards; }
+  @keyframes strike { to { transform: scaleX(1); } }
+  .m-wrong-wrap { text-align: center; }
+  .m-wrong-note { font-size: 12.5px; color: #b91c1c; font-weight: 600; margin-top: 2px; }
+
+  /* ion picker tiles */
+  .ion-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .tile { min-width: 62px; padding: 9px 6px; border-radius: 10px; border: 1px solid var(--borderColor); background: #fff; text-align: center; cursor: pointer; transition: all 140ms; }
+  .tile:hover { border-color: var(--accentBlue); transform: translateY(-1px); }
+  .tile .sym { font-family: var(--font-serif); font-size: 20px; font-weight: 700; color: var(--textWarm); }
+  .tile .nm { font-size: 9px; color: var(--textWarmMuted); font-weight: 600; }
+  .tile .charge { font-family: var(--font-mono); font-size: 13px; font-weight: 700; margin-top: 2px; min-height: 16px; }
+  .tile.revealed.cat { background: rgba(217,119,6,0.10); border-color: rgba(217,119,6,0.45); }
+  .tile.revealed.cat .charge { color: #b45309; }
+  .tile.revealed.an { background: rgba(13,148,136,0.10); border-color: rgba(13,148,136,0.45); }
+  .tile.revealed.an .charge { color: #0f766e; }
+
+  /* practice */
+  .reveal-btn { display: inline-flex; align-items: center; gap: 7px; background: var(--accentBlue); color: #fff; border: none; border-radius: 999px; font-weight: 700; font-size: 13px; padding: 8px 15px; cursor: pointer; }
+  .reveal-btn:hover { background: var(--accentBlueHover); }
+  .reveal-content { margin-top: 10px; padding: 12px 14px; background: var(--bgMain); border: 1px solid var(--borderColor); border-left: 4px solid var(--accentGreen); border-radius: 10px; font-size: 14px; line-height: 1.7; color: var(--textPrimary); white-space: pre-line; }
+  .reveal-content[hidden] { display: none !important; }
+  .q-card { background: #fff; border: 1px solid var(--borderColor); border-radius: 12px; padding: 14px 16px; box-shadow: var(--shadow-sm); }
+  .q-card + .q-card { margin-top: 12px; }
+  .q-card .q-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .q-name { font-weight: 700; font-size: 16px; font-family: var(--font-serif); color: var(--textWarm); }
+  .q-num { font-family: var(--font-mono); color: var(--accentBlue); font-weight: 700; margin-right: 8px; }
+  .ans-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .ans-row input { font-family: var(--font-serif); font-size: 17px; font-weight: 700; padding: 8px 12px; border: 1px solid var(--borderColor); border-radius: 9px; background: #fff; color: var(--textPrimary); width: 150px; }
+  .ans-row input:focus { outline: 2px solid var(--accentBlue); outline-offset: -1px; }
+  .ans-row input.ok { background: rgba(16,185,129,0.12); border-color: var(--accentGreen); color: #166534; }
+  .ans-row input.no { background: rgba(239,68,68,0.10); border-color: var(--accentRed); }
+  .chk-msg { font-size: 12.5px; font-weight: 600; }
+  .chk-msg.ok { color: #166534; } .chk-msg.no { color: #b91c1c; }
+  .pb-progress { margin-top: 6px; }
+  .pb-bar { height: 5px; background: var(--borderSubtle); border-radius: 3px; overflow: hidden; margin-bottom: 5px; }
+  .pb-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accentBlue), var(--accentGreen)); transition: width 300ms ease; }
+  .pb-text { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--textWarmMuted); }
+  .pb-text.complete { color: #166534; }
+
+  /* definition diagram bits */
+  .vocab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .vocab { background: #fff; border: 1px solid var(--borderColor); border-radius: 12px; padding: 12px 14px; box-shadow: var(--shadow-sm); }
+  .vocab .term { font-family: var(--font-serif); font-weight: 700; font-size: 15px; color: var(--textWarm); }
+  .vocab .term.cat { color: #b45309; } .vocab .term.an { color: #0f766e; }
+  .vocab .def { font-size: 13px; color: var(--textSecondary); margin-top: 3px; line-height: 1.45; }
+
+  @media (max-width: 980px) {
+    .workspace { grid-template-columns: 1fr; }
+    .stage { min-height: 380px; }
+    .side { position: static; }
+    header, main { padding-left: 16px; padding-right: 16px; }
+    .progress-track { padding: 0 16px; }
+    .vocab-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="titles">
+    <div class="eyebrow">Chemistry</div>
+    <h1>Writing Ionic Formulas</h1>
+  </div>
+</header>
+<div class="progress-track">
+  <div class="step-line">
+    <span class="now"><span class="num" id="stepNum">Step 01</span><span class="ttl" id="stepTitle"></span></span>
+    <span class="count" id="stepIndicator">01 / 12</span>
+  </div>
+  <div class="bar"><div class="fill" id="progressFill"></div></div>
+</div>
+<main>
+  <div class="workspace">
+    <div class="stage">
+      <div class="stage-label" id="stageLabel">What you see</div>
+      <div class="stage-body" id="stage"></div>
+    </div>
+    <div class="side">
+      <div class="notes-card">
+        <div class="nc-tag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Copy Into Your Notes</div>
+        <div class="step-heading" id="stepHeading"></div>
+        <p id="notes"></p>
+      </div>
+      <div class="notebook-prompt">
+        <div class="np-tag"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>DO</div>
+        <div id="notebookText"></div>
+      </div>
+      <nav>
+        <button id="resetBtn">Start Over</button>
+        <div class="btn-group">
+          <button id="prevBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg> Back</button>
+          <button id="nextBtn" class="primary">Next <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+        </div>
+      </nav>
+    </div>
+  </div>
+</main>
+
+<script>
+// =====================================================
+//  Helpers
+// =====================================================
+const $ = (sel, root=document) => root.querySelector(sel);
+function el(tag, attrs={}, kids=[]) {
+  const n = document.createElement(tag);
+  for (const k in attrs) {
+    if (k === 'class') n.className = attrs[k];
+    else if (k === 'html') n.innerHTML = attrs[k];
+    else if (k.startsWith('on') && typeof attrs[k] === 'function') n.addEventListener(k.slice(2), attrs[k]);
+    else n.setAttribute(k, attrs[k]);
+  }
+  (Array.isArray(kids) ? kids : [kids]).forEach(c => { if (c != null) n.append(c.nodeType ? c : document.createTextNode(c)); });
+  return n;
+}
+function makeCanvas(stage, w, h) {
+  const c = el('canvas'); c.width = w; c.height = h; c.style.maxWidth = w + 'px'; c.style.margin = '0 auto';
+  stage.append(c); return { c, ctx: c.getContext('2d') };
+}
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x+r, y); ctx.arcTo(x+w, y, x+w, y+h, r); ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r); ctx.arcTo(x, y, x+w, y, r); ctx.closePath();
+}
+const icn = (path, size=14, sw=2) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${path}</svg>`;
+const ICON = {
+  right: icn('<path d="m9 18 6-6-6-6"/>'),
+  zap: icn('<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>'),
+  replay: icn('<path d="M3 12a9 9 0 0 1 9-9 9 9 0 0 1 6.7 3L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-6.7-3L3 16"/><path d="M3 21v-5h5"/>'),
+  play: icn('<path d="m6 3 14 9-14 9V3z"/>')
+};
+
+// subscript-render a formula string; charge string builder
+const fmt = s => s.replace(/(\d+)/g, '<sub>$1</sub>');
+const chg = c => { const m = Math.abs(c); return (m>1?m:'') + (c>0?'+':'−'); };
+
+// =====================================================
+//  Verified ion data (from the content workflow)
+// =====================================================
+const CATIONS = {
+  'Hydrogen':{s:'H',c:1,t:'main'}, 'Lithium':{s:'Li',c:1,t:'main'}, 'Sodium':{s:'Na',c:1,t:'main'},
+  'Potassium':{s:'K',c:1,t:'main'}, 'Silver':{s:'Ag',c:1,t:'main'}, 'Magnesium':{s:'Mg',c:2,t:'main'},
+  'Calcium':{s:'Ca',c:2,t:'main'}, 'Barium':{s:'Ba',c:2,t:'main'}, 'Zinc':{s:'Zn',c:2,t:'main'}, 'Aluminum':{s:'Al',c:3,t:'main'},
+  'Iron(II)':{s:'Fe',c:2,t:'transition'}, 'Iron(III)':{s:'Fe',c:3,t:'transition'},
+  'Copper(I)':{s:'Cu',c:1,t:'transition'}, 'Copper(II)':{s:'Cu',c:2,t:'transition'},
+  'Lead(II)':{s:'Pb',c:2,t:'transition'}, 'Lead(IV)':{s:'Pb',c:4,t:'transition'},
+  'Tin(II)':{s:'Sn',c:2,t:'transition'}, 'Tin(IV)':{s:'Sn',c:4,t:'transition'},
+  'Chromium(III)':{s:'Cr',c:3,t:'transition'}, 'Manganese(II)':{s:'Mn',c:2,t:'transition'},
+  'Cobalt(II)':{s:'Co',c:2,t:'transition'}, 'Nickel(II)':{s:'Ni',c:2,t:'transition'}
+};
+const ANIONS = {
+  'Fluoride':{s:'F',c:-1}, 'Chloride':{s:'Cl',c:-1}, 'Bromide':{s:'Br',c:-1}, 'Iodide':{s:'I',c:-1},
+  'Oxide':{s:'O',c:-2}, 'Sulfide':{s:'S',c:-2}, 'Nitride':{s:'N',c:-3}, 'Phosphide':{s:'P',c:-3}
+};
+const POLY = {
+  'Ammonium':{f:'NH4',c:1,cat:true}, 'Hydroxide':{f:'OH',c:-1}, 'Nitrate':{f:'NO3',c:-1}, 'Nitrite':{f:'NO2',c:-1},
+  'Acetate':{f:'C2H3O2',c:-1}, 'Bicarbonate':{f:'HCO3',c:-1}, 'Cyanide':{f:'CN',c:-1}, 'Permanganate':{f:'MnO4',c:-1},
+  'Carbonate':{f:'CO3',c:-2}, 'Sulfate':{f:'SO4',c:-2}, 'Sulfite':{f:'SO3',c:-2}, 'Chromate':{f:'CrO4',c:-2},
+  'Dichromate':{f:'Cr2O7',c:-2}, 'Phosphate':{f:'PO4',c:-3}
+};
+
+// resolve a named ion (cation or anion, monatomic or polyatomic) to a uniform shape
+function ion(name) {
+  if (CATIONS[name]) return { name, token: CATIONS[name].s, charge: CATIONS[name].c, poly:false, roman: CATIONS[name].t==='transition' };
+  if (ANIONS[name]) return { name, token: ANIONS[name].s, charge: ANIONS[name].c, poly:false };
+  if (POLY[name]) return { name, token: POLY[name].f, charge: POLY[name].c, poly:true };
+  return null;
+}
+
+// =====================================================
+//  The LCM solver — the app's single source of truth.
+//  Using the LCM (not the product) guarantees lowest terms,
+//  so Calcium oxide is ALWAYS CaO, never Ca2O2.
+// =====================================================
+function gcd(a,b){ return b ? gcd(b, a%b) : a; }
+function lcm(a,b){ return a*b / gcd(a,b); }
+function unitStr(io, n) {
+  if (n === 1) return io.token;               // count 1: no subscript, no parentheses
+  return io.poly ? `(${io.token})${n}` : `${io.token}${n}`;
+}
+function solve(catName, anName) {
+  const cat = ion(catName), an = ion(anName);
+  const a = Math.abs(cat.charge), b = Math.abs(an.charge);
+  const L = lcm(a, b), nc = L / a, na = L / b;
+  return { cat, an, a, b, L, nc, na, formula: unitStr(cat, nc) + unitStr(an, na) };
+}
+const norm = s => (s||'').replace(/\s+/g,'').replace(/−/g,'-');
+
+// build the copy-down worked solution for any compound
+function workedFor(catName, anName) {
+  const r = solve(catName, anName);
+  const cc = chg(r.cat.charge), ac = chg(r.an.charge);
+  const catShow = r.cat.poly ? r.cat.token : r.cat.token;
+  const romanNote = r.cat.roman ? ` The Roman numeral in the name tells you ${r.cat.name.replace(/\(.*\)/, '').trim()} is ${r.cat.token}${cc}.` : '';
+  const equalTrap = (r.a === r.b && r.a > 1) ? `  Watch out: do NOT write ${r.cat.token}${r.a}${r.an.token}${r.b} — the LCM already reduces it to lowest terms.` : '';
+  const parenNote = (r.an.poly && r.na>1) ? `  The polyatomic ${r.an.token} appears ${r.na} times, so wrap it in parentheses: (${r.an.token})${r.na}.`
+                  : (r.cat.poly && r.nc>1) ? `  The polyatomic ${r.cat.token} appears ${r.nc} times, so wrap it: (${r.cat.token})${r.nc}.` : '';
+  return [
+    `1) Ions & charges: ${r.cat.token}${cc} and ${r.an.token}${ac}.${romanNote}`,
+    `2) Charge sizes (drop signs): ${r.a} and ${r.b}.`,
+    `3) LCM of ${r.a} and ${r.b} = ${r.L}.`,
+    `4) Counts = LCM ÷ each size: ${r.cat.token} = ${r.L}÷${r.a} = ${r.nc}; ${r.an.token} = ${r.L}÷${r.b} = ${r.na}.`,
+    `Formula: ${r.formula}.${equalTrap}${parenNote}`
+  ].join('\n');
+}
+
+// =====================================================
+//  Canvas atom / ion drawing
+// =====================================================
+const IONC = { pos:{fill:'#d97706',lite:'#fbbf24',glow:'217,119,6'}, neg:{fill:'#0d9488',lite:'#5eead4',glow:'13,148,136'} };
+function drawIonBall(ctx, x, y, label, sign, r) {
+  const C = sign>0 ? IONC.pos : IONC.neg;
+  const gg = ctx.createRadialGradient(x,y,0,x,y,r+8); gg.addColorStop(0,`rgba(${C.glow},0.28)`); gg.addColorStop(1,`rgba(${C.glow},0)`);
+  ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(x,y,r+8,0,Math.PI*2); ctx.fill();
+  const g = ctx.createRadialGradient(x-r*0.35,y-r*0.35,1,x,y,r); g.addColorStop(0,C.lite); g.addColorStop(1,C.fill);
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font=`700 ${Math.round(r*0.72)}px Roboto Mono, monospace`; ctx.fillText(label, x-(label.length>1?r*0.14:0), y);
+  ctx.font=`700 ${Math.round(r*0.55)}px Roboto Mono, monospace`; ctx.fillText(sign>0?'+':'−', x + r*0.6 + (label.length>1?r*0.2:0), y - r*0.5);
+}
+function drawBulb(ctx, x, y, b) {
+  b = Math.max(0, Math.min(1, b));
+  if (b > 0.03) { const gr=ctx.createRadialGradient(x,y,0,x,y,44*b+8); gr.addColorStop(0,`rgba(251,191,36,${0.6*b})`); gr.addColorStop(1,'rgba(251,191,36,0)'); ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(x,y,44*b+8,0,Math.PI*2); ctx.fill(); }
+  ctx.fillStyle = b>0.05?`rgba(254,243,199,${0.55+0.45*b})`:'#f1ede6'; ctx.strokeStyle='#a8a29e'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(x,y,15,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#78716c'; roundRect(ctx,x-6,y+12,12,9,2); ctx.fill();
+  ctx.strokeStyle=b>0.05?`rgb(255,${Math.round(170+70*b)},50)`:'#cbc4b8'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(x-5,y+2); ctx.lineTo(x-2,y-5); ctx.lineTo(x+2,y+1); ctx.lineTo(x+5,y-5); ctx.stroke();
+}
+// Bohr atom: nucleus symbol + shells of electrons
+const BOHR_R = [0, 24, 44, 64];
+function drawBohr(ctx, cx, cy, sym, shells, opts={}) {
+  // shell rings + electrons
+  for (let i=0;i<shells.length;i++){ const r=BOHR_R[i+1]; if(!r) continue;
+    const isVal = i===shells.length-1;
+    ctx.strokeStyle = (opts.valGlow && isVal) ? 'rgba(168,85,247,0.55)' : 'rgba(99,102,241,0.30)';
+    ctx.setLineDash([3,6]); ctx.lineWidth=1.3; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+    const n=shells[i]; for(let k=0;k<n;k++){ const a=(k/n)*Math.PI*2 - Math.PI/2 + (opts.spin||0)*(i%2?-1:1);
+      const ex=cx+Math.cos(a)*r, ey=cy+Math.sin(a)*r;
+      const hot = opts.hotValence && isVal && k===n-1;
+      ctx.fillStyle = hot ? '#a855f7' : '#6366f1';
+      const rr = hot ? 5.5 : 4.5;
+      if(hot){ const gg=ctx.createRadialGradient(ex,ey,0,ex,ey,12); gg.addColorStop(0,'rgba(168,85,247,0.6)'); gg.addColorStop(1,'rgba(168,85,247,0)'); ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(ex,ey,12,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#a855f7'; }
+      ctx.beginPath(); ctx.arc(ex,ey,rr,0,Math.PI*2); ctx.fill();
+    }
+  }
+  // nucleus
+  const ng=ctx.createRadialGradient(cx-4,cy-4,2,cx,cy,20); ng.addColorStop(0,'#c7d2fe'); ng.addColorStop(1,'#818cf8');
+  ctx.fillStyle=ng; ctx.beginPath(); ctx.arc(cx,cy,18,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#1e1b4b'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.font='700 15px Roboto Serif, serif'; ctx.fillText(sym, cx, cy);
+  if (opts.badge){ ctx.fillStyle=opts.badgeCol||'#d97706'; ctx.font='700 14px Roboto Mono'; ctx.fillText(opts.badge, cx+BOHR_R[shells.length]+16, cy-BOHR_R[shells.length]-2); }
+}
+function driftFree(p, dt, bounds, pullX) {
+  p.vx=(p.vx||0)+(Math.random()-0.5)*0.26; p.vy=(p.vy||0)+(Math.random()-0.5)*0.26;
+  if (pullX!=null) p.vx += (pullX-p.x)*0.0011;
+  p.vx*=0.93; p.vy*=0.93; p.x+=p.vx*dt*0.12; p.y+=p.vy*dt*0.12;
+  const [l,r,t,b]=bounds;
+  if(p.x<l){p.x=l;p.vx=Math.abs(p.vx)*0.6;} if(p.x>r){p.x=r;p.vx=-Math.abs(p.vx)*0.6;}
+  if(p.y<t){p.y=t;p.vy=Math.abs(p.vy)*0.6;} if(p.y>b){p.y=b;p.vy=-Math.abs(p.vy)*0.6;}
+}
+
+let currentTick = null, lastTs = null;
+function loop(ts){ if(lastTs==null) lastTs=ts; const dt=Math.min(50,ts-lastTs); lastTs=ts; if(currentTick) currentTick(dt); requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+
+// =====================================================
+//  Shared UI: the animated "method machine" (Steps 5-9)
+// =====================================================
+function methodMachine(host, catName, anName, opts={}) {
+  host.innerHTML = '';
+  const r = solve(catName, anName);
+  const machine = el('div',{class:'machine'});
+  const nameEl = el('div',{class:'m-name',html:`<span class="cat-w">${catName}</span> <span class="an-w">${anName.toLowerCase()}</span>`});
+  const movesWrap = el('div',{style:'display:flex;flex-direction:column;gap:12px'});
+  machine.append(nameEl, movesWrap);
+  host.append(machine);
+  const cc = chg(r.cat.charge), ac = chg(r.an.charge);
+  const moves = [
+    { lab:'Move 1 · Identify each ion + charge', html:
+      `<span class="ion-chip cat">${fmt(r.cat.token)}<sup>${cc}</sup></span> and <span class="ion-chip an">${fmt(r.an.token)}<sup>${ac}</sup></span>` +
+      (r.cat.roman ? `<div style="font-size:12.5px;color:#b45309;margin-top:6px">The Roman numeral tells you ${r.cat.token} is ${cc}.</div>`:'') },
+    { lab:'Move 2 · Take the charge sizes (drop signs)', html:`<b style="font-family:var(--font-mono);font-size:18px">${r.a}</b> and <b style="font-family:var(--font-mono);font-size:18px">${r.b}</b>` },
+    { lab:'Move 3 · Least common multiple', html:`LCM of ${r.a} and ${r.b} is <span class="lcm-badge">LCM = ${r.L}</span>` },
+    { lab:'Move 4 · Counts = LCM ÷ each size → write it', html:
+      `${r.cat.token}: ${r.L}÷${r.a} = <b>${r.nc}</b> &nbsp;·&nbsp; ${r.an.token}: ${r.L}÷${r.b} = <b>${r.na}</b>` }
+  ];
+  let shown = 0;
+  const finalWrap = el('div');
+  const nextBtn = el('button',{class:'primary',html:'Next move '+ICON.right});
+  const controls = el('div',{class:'tool-row',style:'margin-top:2px'},[nextBtn]);
+  host.append(controls, finalWrap);
+  function showFinal(){
+    finalWrap.innerHTML='';
+    const box = el('div',{class:'m-final'},[
+      el('div',{class:'big formula',html:fmt(r.formula)}),
+      el('div',{class:'ok',html:'Lowest terms · charges balance to zero'})
+    ]);
+    finalWrap.append(box);
+    if (r.a === r.b && r.a > 1) {
+      const wrong = `${r.cat.token}${r.a}${r.an.token}${r.b}`;
+      finalWrap.append(el('div',{class:'m-wrong-wrap',style:'margin-top:10px'},[
+        el('span',{class:'m-wrong',html:fmt(wrong)+'<span class="strike"></span>'}),
+        el('div',{class:'m-wrong-note'},'Naive criss-cross gives this — the LCM already reduced it. '+ r.formula +' is correct.')
+      ]));
+    }
+    if (opts.compare) {
+      const row = el('div',{class:'tool-row',style:'margin-top:12px'});
+      opts.compare.forEach(([cn,an2,lbl]) => row.append(el('button',{onclick(){ methodMachine(host, cn, an2, opts); }}, lbl)));
+      finalWrap.append(el('div',{class:'eyebrow-sm',style:'text-align:center;margin-top:12px'},'Run it again'), row);
+    }
+  }
+  nextBtn.addEventListener('click',()=>{
+    if (shown < moves.length){ const m=moves[shown]; movesWrap.append(el('div',{class:'move'},[el('div',{class:'m-lab'},m.lab), el('div',{class:'m-body',html:m.html})])); shown++;
+      if (shown===moves.length){ nextBtn.innerHTML='Write the formula '+ICON.play; }
+    } else { nextBtn.disabled=true; nextBtn.style.display='none'; showFinal(); }
+  });
+  if (opts.auto) { while(shown<moves.length) nextBtn.click(); nextBtn.click(); }
+}
+
+// =====================================================
+//  SCENES
+// =====================================================
+const scenes = [];
+
+// ---- Step 1: Memory bridge ----
+scenes.push({
+  seeLabel: 'Memory bridge',
+  heading: 'Step 1: From Atoms to Ions — Our New Job',
+  notes: "<strong>Today's one job:</strong> given the NAME of an ionic compound, write its correct chemical FORMULA. In the Atomic Structure app, atoms became <strong>ions</strong> by <strong>losing</strong> or <strong>gaining</strong> electrons. A charged atom is an <strong>ion</strong>. A formula is just a <strong>headcount</strong> of ions — how many of each are locked together.",
+  notebook: "Before you press replay, <strong>predict and write</strong> one word: when sodium becomes an ion, does it end up <strong>positive</strong> or <strong>negative</strong>? Then copy the mission: \"Given the NAME, I write the FORMULA,\" and fill the blanks — atoms become ions by ____ or ____ electrons.",
+  build(stage) {
+    const { ctx } = makeCanvas(stage, 520, 300);
+    let phase='idle', t=0;
+    const NaX=150, ClX=330, cy=150;
+    const btn = el('button',{class:'primary',html:'Replay the electron transfer '+ICON.replay});
+    btn.addEventListener('click',()=>{ phase='move'; t=0; });
+    currentTick = (dt) => {
+      ctx.clearRect(0,0,520,300);
+      if(phase==='move'){ t=Math.min(1,t+dt/1100); if(t>=1) phase='done'; }
+      const done = phase==='done';
+      // atoms (Na 2,8,1 -> Na+ ; Cl 2,8,7 -> Cl- 2,8,8)
+      drawBohr(ctx, NaX, cy, 'Na', done?[2,8]:[2,8,1], { hotValence: phase!=='done', badge: done?'+':'', badgeCol:'#d97706' });
+      drawBohr(ctx, ClX, cy, 'Cl', done?[2,8,8]:[2,8,7], { badge: done?'−':'', badgeCol:'#0d9488' });
+      if(phase==='move'){ const sx=NaX+BOHR_R[3], sy=cy, tx=ClX-BOHR_R[3]-4, ty=cy;
+        const ex=sx+(tx-sx)*t, ey=sy+(ty-sy)*t-Math.sin(t*Math.PI)*34;
+        ctx.fillStyle='#a855f7'; ctx.beginPath(); ctx.arc(ex,ey,6,0,Math.PI*2); ctx.fill(); }
+      // labels
+      ctx.textAlign='center'; ctx.font='700 11px Roboto Mono'; ctx.fillStyle='#57534e';
+      ctx.fillText(done?'CATION (Na⁺)':'sodium atom', NaX, cy+72);
+      ctx.fillText(done?'ANION (Cl⁻)':'chlorine atom', ClX, cy+72);
+      // arrow to formula slot
+      ctx.fillStyle='#a0937b'; ctx.font='italic 12px Inter';
+      ctx.fillText(done? 'name  →  formula: NaCl' : 'name  →  ? ? ?', 260, 250);
+    };
+    stage.append(el('div',{class:'tool-row'},[btn]),
+      el('div',{class:'caption'},'You met ions in the Atomic Structure app. Now you learn where they come from — and how their names hide a formula.'));
+  }
+});
+
+// ---- Step 2: Why ions matter (conductivity + heart) ----
+scenes.push({
+  seeLabel: 'Free vs locked',
+  heading: 'Step 2: Why Ions Matter — The Heart Runs on Charge',
+  notes: "<strong>The rule of free ions:</strong> an ionic compound conducts electricity only when its ions are <strong>free to move</strong> — melted or dissolved. Locked in a solid crystal they cannot carry charge, so the bulb stays dark. Your <strong>heartbeat</strong> depends on the same thing: Na<sup style=\"font-size:0.68em\">+</sup>, K<sup style=\"font-size:0.68em\">+</sup>, and Ca<sup style=\"font-size:0.68em\">2+</sup> ions moving across cell membranes. No moving ions, no current.",
+  notebook: "You saw <strong>solid</strong> salt fail to light the bulb in lab. <strong>Predict</strong> in one sentence: what has to change about the ions to make salt water light it? Then fill the mini-table — SOLID: ions ____, bulb ____; MELTED/DISSOLVED: ions ____, bulb ____.",
+  build(stage) {
+    const { ctx } = makeCanvas(stage, 520, 300);
+    let free=false, bright=0;
+    let ions=[];
+    function layout(){ ions=[];
+      if(!free){ const cols=5,rows=4,x0=70,y0=150,dx=30,dy=28; for(let r=0;r<rows;r++)for(let c=0;c<cols;c++) ions.push({sign:((r+c)%2===0)?1:-1,hx:x0+c*dx,hy:y0+r*dy,x:x0+c*dx,y:y0+r*dy,ph:Math.random()*6.28}); }
+      else { for(let i=0;i<9;i++){ ions.push(mk(1)); ions.push(mk(-1)); } } }
+    function mk(sign){ return {sign,x:55+Math.random()*160,y:110+Math.random()*95,vx:(Math.random()-.5)*.5,vy:(Math.random()-.5)*.5}; }
+    layout();
+    const status = el('div',{class:'status-line'});
+    function setStatus(){ status.innerHTML = free ? 'Melted / dissolved: ions <strong>free to move</strong>, so the bulb glows and the heartbeat runs.' : 'Solid crystal: ions <strong>locked in place</strong>, so the bulb stays dark.'; }
+    const toggle = el('button',{class:'primary'});
+    function setLabel(){ toggle.innerHTML = (free?'Freeze it solid ':'Melt / dissolve it ')+ICON.zap; }
+    toggle.addEventListener('click',()=>{ free=!free; layout(); setLabel(); setStatus(); });
+    let hb=0;
+    currentTick = (dt) => {
+      ctx.clearRect(0,0,520,300);
+      bright += ((free?1:0)-bright)*Math.min(1,dt/240);
+      // left: beaker
+      ctx.fillStyle='#eef2f7'; roundRect(ctx,40,95,220,175,12); ctx.fill(); ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=2; roundRect(ctx,40,95,220,175,12); ctx.stroke();
+      if(free){ ctx.fillStyle='rgba(147,197,253,0.16)'; roundRect(ctx,44,120,212,146,9); ctx.fill(); }
+      // electrodes + bulb
+      ctx.fillStyle='#94a3b8'; roundRect(ctx,60,88,9,150,4); ctx.fill(); roundRect(ctx,231,88,9,150,4); ctx.fill();
+      drawBulb(ctx,150,58,bright);
+      const b=[52,248,112,262];
+      ions.forEach(p=>{ if(!free){ p.ph+=dt*0.01; drawIonBall(ctx,p.hx+Math.sin(p.ph)*1.6,p.hy+Math.cos(p.ph)*1.6,'',p.sign,10); } else { driftFree(p,dt,b,p.sign>0?64:236); drawIonBall(ctx,p.x,p.y,'',p.sign,10); } });
+      ctx.textAlign='center'; ctx.font='700 10px Roboto Mono'; ctx.fillStyle='#57534e'; ctx.fillText(free?'FREE IONS':'LOCKED LATTICE',150,258);
+      // right: heart monitor
+      ctx.fillStyle='#0f172a'; roundRect(ctx,300,95,190,120,10); ctx.fill();
+      hb += dt*(free?0.004:0.0006);
+      const midY=155, amp=free?34:5;
+      ctx.strokeStyle=free?'#34d399':'#64748b'; ctx.lineWidth=2.2; ctx.lineJoin='round'; ctx.beginPath();
+      for(let i=0;i<120;i++){ const x=305+i*(180/119); const ph=((hb-(119-i)*0.05)%1+1)%1;
+        let v=0; if(ph<0.12)v=Math.sin(ph/0.12*Math.PI)*0.12; else if(ph<0.18)v=-(ph-0.12)/0.06*0.3; else if(ph<0.24)v=(ph-0.18)/0.06*1.05-0.3; else if(ph<0.30)v=1.05-(ph-0.24)/0.06*1.35; else if(ph<0.36)v=-0.3+(ph-0.30)/0.06*0.3; else if(ph<0.55)v=Math.sin((ph-0.36)/0.19*Math.PI)*0.2;
+        const y=midY-v*amp; i?ctx.lineTo(x,y):ctx.moveTo(x,y); }
+      ctx.stroke();
+      ctx.fillStyle='#94a3b8'; ctx.textAlign='center'; ctx.font='700 9px Roboto Mono'; ctx.fillText('HEART · IONS ON THE MOVE',395,205);
+      ctx.fillStyle=free?'#059669':'#94a3b8'; ctx.fillText(free?'BEATING':'FLAT',395,88);
+    };
+    setLabel(); setStatus();
+    stage.append(el('div',{class:'tool-row'},[toggle]), status,
+      el('div',{class:'caption'},'Same rule in a beaker and in a chest — current is ions on the move.'));
+  }
+});
+
+// ---- Step 3: What "ionic" means (plain definition) ----
+scenes.push({
+  seeLabel: 'Vocabulary',
+  heading: 'Step 3: What "Ionic" Means',
+  notes: "<strong>An ionic compound</strong> is a <strong>metal</strong> joined to a <strong>nonmetal</strong> by transferred electrons. When an atom loses or gains electrons it becomes a charged particle: an <strong>ion</strong>. A positive ion (the metal) is a <strong>cation</strong>; a negative ion (the nonmetal) is an <strong>anion</strong>. The attraction that holds them together is the <strong>ionic bond</strong>.",
+  notebook: "Copy the four vocabulary words with a short definition in <strong>your own words</strong>: <strong>ion, cation, anion, ionic bond</strong>. Then finish the sentence: \"An ionic compound is made of a ____ and a ____ held together by ____.\"",
+  build(stage) {
+    const { ctx } = makeCanvas(stage, 520, 170);
+    let t=0;
+    currentTick = (dt) => {
+      ctx.clearRect(0,0,520,170); t+=dt*0.002;
+      const cx1=170, cx2=350, cy=85;
+      // attraction field lines
+      ctx.strokeStyle='rgba(168,85,247,0.35)'; ctx.setLineDash([2,5]); ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(cx1+34,cy); ctx.lineTo(cx2-34,cy); ctx.stroke(); ctx.setLineDash([]);
+      const pull=Math.sin(t)*3;
+      drawIonBall(ctx,cx1+pull,cy,'K',1,30);
+      drawIonBall(ctx,cx2-pull,cy,'Cl',-1,30);
+      ctx.textAlign='center'; ctx.font='700 10px Roboto Mono';
+      ctx.fillStyle='#b45309'; ctx.fillText('CATION (+)',cx1,cy+52);
+      ctx.fillStyle='#0f766e'; ctx.fillText('ANION (−)',cx2,cy+52);
+      ctx.fillStyle='#a855f7'; ctx.fillText('IONIC BOND',260,cy-42);
+    };
+    const grid = el('div',{class:'vocab-grid'},[
+      el('div',{class:'vocab'},[el('div',{class:'term'},'Ion'), el('div',{class:'def'},'An atom that has lost or gained electrons, so it now carries a charge.')]),
+      el('div',{class:'vocab'},[el('div',{class:'term cat'},'Cation (+)'), el('div',{class:'def'},'A positive ion. Metals lose electrons to become cations.')]),
+      el('div',{class:'vocab'},[el('div',{class:'term an'},'Anion (−)'), el('div',{class:'def'},'A negative ion. Nonmetals gain electrons to become anions.')]),
+      el('div',{class:'vocab'},[el('div',{class:'term'},'Ionic bond'), el('div',{class:'def'},'The attraction between a cation and an anion that holds the compound together.')])
+    ]);
+    stage.append(grid, el('div',{class:'caption',style:'margin-top:6px'},'No covalent here — an ionic compound is simply a metal cation held to a nonmetal anion.'));
+  }
+});
+
+// ---- Step 4: Bohr transfer (model + draw) ----
+scenes.push({
+  seeLabel: 'Electron transfer',
+  heading: 'Step 4: The Bohr Reason — Who Loses, Who Gains',
+  notes: "<strong>Metals lose, nonmetals gain.</strong> Every atom “wants” a full outer shell (an octet = stability). A metal has only a few outer electrons, so it <strong>loses</strong> them and becomes a positive <strong>cation</strong>. A nonmetal is nearly full, so it <strong>gains</strong> electrons and becomes a negative <strong>anion</strong>. The number of electrons moved is exactly the <strong>size of the charge</strong>.",
+  notebook: "<strong>Draw the transfer yourself.</strong> Draw the two atoms before, an <strong>arrow</strong> for each electron that moves, and the two ions after with their charges labeled. Then predict: chlorine has 7 outer electrons — will it <strong>lose 7</strong> or <strong>gain 1</strong>, and why is that easier?",
+  build(stage) {
+    const { ctx } = makeCanvas(stage, 520, 300);
+    const pairs = { 'Na + Cl':{a:'Na',sa:[2,8,1],b:'Cl',sb:[2,8,7],moved:1,ca:'+',cb:'−'},
+                    'Mg + O':{a:'Mg',sa:[2,8,2],b:'O',sb:[2,6],moved:2,ca:'2+',cb:'2−'} };
+    let key='Na + Cl', phase='idle', t=0, moved=0;
+    const chips = el('div',{class:'tool-row'}, Object.keys(pairs).map(k=>el('button',{class:'chip'+(k===key?' active':''),'data-k':k,
+      onclick(){ key=k; phase='idle'; t=0; moved=0; chips.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.dataset.k===k)); setStatus(); }},k)));
+    const status = el('div',{class:'status-line'});
+    function setStatus(){ const p=pairs[key]; status.innerHTML = phase==='done'
+      ? `${p.a} lost ${p.moved} → <strong style="color:#d97706">${p.a}<sup style="font-size:0.68em">${p.ca}</sup></strong>, ${p.b} gained ${p.moved} → <strong style="color:#0d9488">${p.b}<sup style="font-size:0.68em">${p.cb}</sup></strong>. Full octets — stable.`
+      : `${p.a} has ${p.sa[p.sa.length-1]} outer electron(s); ${p.b} needs ${8-p.sb[p.sb.length-1]} to fill its shell.`; }
+    const btn = el('button',{class:'primary',html:'Transfer the electron(s) '+ICON.right});
+    btn.addEventListener('click',()=>{ if(phase==='idle'){ phase='move'; t=0; moved=0; } });
+    const NaX=150, ClX=350, cy=150;
+    currentTick = (dt) => {
+      ctx.clearRect(0,0,520,300); const p=pairs[key];
+      if(phase==='move'){ t+=dt/900; if(t>=1){ moved++; t=0; if(moved>=p.moved){ phase='done'; setStatus(); } } }
+      const done=phase==='done';
+      const aShells = done ? p.sa.slice(0,-1) : p.sa;
+      const bShells = done ? p.sb.slice(0,-1).concat([p.sb[p.sb.length-1]+p.moved]) : p.sb;
+      drawBohr(ctx,NaX,cy,p.a,aShells,{hotValence:!done, valGlow:!done, badge:done?p.ca:'', badgeCol:'#d97706'});
+      drawBohr(ctx,ClX,cy,p.b,bShells,{badge:done?p.cb:'', badgeCol:'#0d9488'});
+      if(phase==='move'){ const sx=NaX+BOHR_R[p.sa.length], tx=ClX-BOHR_R[p.sb.length]-4;
+        const ex=sx+(tx-sx)*t, ey=cy-Math.sin(t*Math.PI)*36;
+        ctx.fillStyle='#a855f7'; ctx.beginPath(); ctx.arc(ex,ey,6,0,Math.PI*2); ctx.fill(); }
+      ctx.textAlign='center'; ctx.font='700 10px Roboto Mono';
+      ctx.fillStyle='#b45309'; ctx.fillText(done?'CATION':'metal',NaX,cy+78);
+      ctx.fillStyle='#0f766e'; ctx.fillText(done?'ANION':'nonmetal',ClX,cy+78);
+      btn.disabled = phase!=='idle';
+    };
+    setStatus();
+    stage.append(chips, el('div',{class:'tool-row',style:'margin-top:2px'},[btn]), status,
+      el('div',{class:'caption'},'Electrons moved = size of the charge. Try Mg + O to see two electrons cross.'));
+  }
+});
+
+// ---- Step 5: Meet the ions & charges ----
+scenes.push({
+  seeLabel: 'Charge lookup',
+  heading: 'Step 5: Meet the Ions and Their Charges',
+  notes: "<strong>Position tells you the charge.</strong> Main group: <strong>Group 1 = +1, Group 2 = +2, Al = +3; Group 15 = −3, Group 16 = −2, Group 17 = −1</strong>. Transition metals vary, so the <strong>Roman numeral</strong> in the name gives the charge (II = 2+, III = 3+). Polyatomic ions are named clusters that carry one charge as a single piece.",
+  notebook: "The name says “Iron(III) oxide.” Before revealing, <strong>predict and write</strong> both charges: iron ____ and oxide ____. Then copy the charge strip — Group 1 = ____, Group 2 = ____, Al = ____, Group 16 = ____, Group 17 = ____ — and: “Transition-metal charge = the ____ ____ in the name.”",
+  build(stage) {
+    function tile(label, chargeText, cls){ const t = el('div',{class:'tile '+cls},[el('div',{class:'sym'},label),el('div',{class:'charge'},''),el('div',{class:'nm'},'tap to reveal')]);
+      t.addEventListener('click',()=>{ t.classList.add('revealed'); t.querySelector('.charge').innerHTML=chargeText; t.querySelector('.nm').textContent='revealed'; }); return t; }
+    stage.append(el('div',{class:'eyebrow-sm',style:'text-align:center'},'Main-group cations (charge from group)'));
+    stage.append(el('div',{class:'ion-grid'},[['Li','+'],['Na','+'],['K','+'],['Mg','2+'],['Ca','2+'],['Al','3+']].map(([s,c])=>tile(s,c,'cat'))));
+    stage.append(el('div',{class:'eyebrow-sm',style:'text-align:center;margin-top:6px'},'Anions (charge from group)'));
+    stage.append(el('div',{class:'ion-grid'},[['F','−'],['Cl','−'],['O','2−'],['S','2−'],['N','3−']].map(([s,c])=>tile(s,c,'an'))));
+    // transition: roman numeral gives charge
+    stage.append(el('div',{class:'eyebrow-sm',style:'text-align:center;margin-top:6px'},'Transition metals — the Roman numeral gives the charge'));
+    const romRow = el('div',{class:'tool-row'});
+    const romOut = el('div',{class:'status-line',style:'min-height:20px'});
+    [['Iron(II)','Fe','2+'],['Iron(III)','Fe','3+'],['Copper(I)','Cu','+'],['Copper(II)','Cu','2+']].forEach(([n,s,c])=>{
+      romRow.append(el('button',{class:'chip',onclick(){ romOut.innerHTML=`<span class="ion-chip cat" style="font-size:18px">${s}<sup>${c}</sup></span> &nbsp; from <strong>${n}</strong>`; }},n)); });
+    stage.append(romRow, romOut);
+    // polyatomic drawer
+    stage.append(el('div',{class:'eyebrow-sm',style:'text-align:center;margin-top:6px'},'Polyatomic ions — one named unit, one charge'));
+    const poly = ['Ammonium','Hydroxide','Nitrate','Sulfate','Carbonate','Phosphate'];
+    stage.append(el('div',{class:'ion-grid'}, poly.map(n=>{ const P=POLY[n]; const t=el('div',{class:'tile '+(P.cat?'cat':'an'),style:'min-width:80px'},[el('div',{class:'sym',style:'font-size:15px',html:fmt(P.f)}),el('div',{class:'charge'},''),el('div',{class:'nm'},n)]);
+      t.addEventListener('click',()=>{ t.classList.add('revealed'); t.querySelector('.charge').innerHTML=chg(P.c); }); return t; })));
+    stage.append(el('div',{class:'caption',style:'margin-top:6px'},'Tap any ion to reveal its charge. In Step 8 we treat each polyatomic as ONE piece.'));
+  }
+});
+
+// ---- Step 6: THE METHOD ----
+scenes.push({
+  seeLabel: 'Method machine',
+  heading: 'Step 6: The Method — Charges → LCM → Counts → Formula',
+  notes: "<strong>The 4 moves (memorize):</strong> 1) Write each ion + its charge. 2) Take the charge SIZES, drop the signs. 3) Find the <strong>LCM</strong> of those sizes. 4) Count of each ion = <strong>LCM ÷ its own size</strong>; write the formula. The LCM already gives <strong>lowest terms</strong>, so Calcium oxide is <strong>CaO, never Ca₂O₂</strong>. Never use plain criss-cross.",
+  notebook: "Calcium is 2+ and oxide is 2−. Before the machine runs, <strong>predict and write</strong>: the LCM of 2 and 2, how many of each ion, and whether the formula is <strong>CaO</strong> or <strong>Ca₂O₂</strong>. Then copy the 4 moves and hand-run CaO through all four.",
+  build(stage) {
+    const host = el('div');
+    stage.append(host);
+    methodMachine(host, 'Calcium', 'Oxide', { compare:[['Sodium','Oxide','Sodium oxide (Na₂O)'],['Aluminum','Oxide','Aluminum oxide (Al₂O₃)']] });
+    stage.append(el('div',{class:'caption',style:'margin-top:10px'},'Click through the four moves. The LCM lands you in lowest terms every time.'));
+  }
+});
+
+// ---- Step 7: Guided binary main-group ----
+scenes.push({
+  seeLabel: 'Guided binaries',
+  heading: 'Step 7: Guided Binary Practice (Main-Group)',
+  notes: "<strong>Same 4 moves, new numbers.</strong> Only the charges change the subscripts: 1+ with 1− gives <strong>1:1</strong> (NaCl); 2+ with 1− gives <strong>1:2</strong> (MgCl₂); 3+ with 2− gives <strong>2:3</strong> (Al₂O₃); equal charges reduce to <strong>1:1</strong> (CaO, MgO). The method never changes — only the LCM does.",
+  notebook: "For each compound, <strong>predict and write</strong> the ions + charges, the LCM, the counts, and the formula <strong>before</strong> you run the machine. Fill a table row: name | ions + charges | LCM | counts | formula.",
+  build(stage) {
+    const set = [['Potassium','Chloride','Potassium chloride'],['Magnesium','Chloride','Magnesium chloride'],['Aluminum','Oxide','Aluminum oxide'],['Sodium','Sulfide','Sodium sulfide']];
+    const host = el('div');
+    const row = el('div',{class:'tool-row'}, set.map(([c,a,lbl],i)=>el('button',{class:'chip'+(i===0?' active':''),onclick(e){ row.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); e.target.classList.add('active'); methodMachine(host,c,a,{}); }},lbl)));
+    stage.append(row, host);
+    methodMachine(host, set[0][0], set[0][1], {});
+  }
+});
+
+// ---- Step 8: Transition metals ----
+scenes.push({
+  seeLabel: 'Roman numeral',
+  heading: 'Step 8: Transition Metals — The Roman Numeral IS the Charge',
+  notes: "<strong>The Roman numeral in the name = the metal’s charge.</strong> Transition metals can carry more than one charge, so the name tells you which — never guess. <strong>Iron(II) oxide = FeO; Iron(III) oxide = Fe₂O₃; Copper(I) chloride = CuCl; Copper(II) chloride = CuCl₂.</strong> Once you read the charge off the numeral, run the same LCM method.",
+  notebook: "Iron(III) oxide: the (III) means iron is 3+, oxide is 2−. <strong>Predict and write</strong> the LCM of 3 and 2 and the finished formula — FeO, Fe₂O₃, or Fe₃O₂ — before you switch. Then copy: Iron(II) oxide = ____, Iron(III) oxide = ____.",
+  build(stage) {
+    const set = [['Iron(II)','Oxide','Iron(II) oxide'],['Iron(III)','Oxide','Iron(III) oxide'],['Copper(I)','Chloride','Copper(I) chloride'],['Copper(II)','Chloride','Copper(II) chloride']];
+    const host = el('div');
+    const row = el('div',{class:'tool-row'}, set.map(([c,a,lbl],i)=>el('button',{class:'chip'+(i===0?' active':''),onclick(e){ row.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); e.target.classList.add('active'); methodMachine(host,c,a,{}); }},lbl)));
+    stage.append(row, host);
+    stage.append(el('div',{class:'caption',style:'margin-top:8px'},'Same element, different Roman numeral — only the charge changed the answer. No guessing.'));
+    methodMachine(host, set[0][0], set[0][1], {});
+  }
+});
+
+// ---- Step 9: Polyatomic ions ----
+scenes.push({
+  seeLabel: 'Parentheses gate',
+  heading: 'Step 9: Polyatomic Ions — Keep the Group Together',
+  notes: "<strong>A polyatomic ion moves as ONE piece with one charge</strong> (NO₃⁻, SO₄²⁻, OH⁻, PO₄³⁻, NH₄⁺). Run the same LCM method treating the whole group as a unit. Use <strong>parentheses only when its count is 2 or more</strong>: Sodium nitrate = <strong>NaNO₃</strong> (no parens), Calcium nitrate = <strong>Ca(NO₃)₂</strong>. Never split the atoms inside a polyatomic ion.",
+  notebook: "Calcium nitrate: calcium is 2+, nitrate (NO₃⁻) is 1−. <strong>Predict and write</strong> how many nitrate UNITS you need, and whether the formula needs parentheses, before the machine runs. Then copy: Sodium nitrate = ____, Calcium nitrate = ____, Magnesium hydroxide = ____.",
+  build(stage) {
+    const set = [['Sodium','Nitrate','Sodium nitrate'],['Calcium','Nitrate','Calcium nitrate'],['Aluminum','Sulfate','Aluminum sulfate'],['Ammonium','Sulfate','Ammonium sulfate'],['Magnesium','Hydroxide','Magnesium hydroxide'],['Calcium','Phosphate','Calcium phosphate']];
+    const host = el('div');
+    const row = el('div',{class:'tool-row'}, set.map(([c,a,lbl],i)=>el('button',{class:'chip'+(i===0?' active':''),onclick(e){ row.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); e.target.classList.add('active'); methodMachine(host,c,a,{}); }},lbl)));
+    stage.append(row, host);
+    stage.append(el('div',{class:'caption',style:'margin-top:8px'},'Parentheses appear only when the polyatomic count is 2 or more.'));
+    methodMachine(host, set[0][0], set[0][1], {});
+  }
+});
+
+// ---- Practice runner (shared) ----
+function practiceStep(stage, items, intro) {
+  stage.append(el('div',{class:'caption',style:'margin-bottom:4px'}, intro));
+  let done = 0;
+  const bar = el('div',{class:'pb-bar'},[el('div',{class:'pb-fill'})]);
+  const text = el('div',{class:'pb-text'}, `0 of ${items.length} checked`);
+  items.forEach((it,i) => {
+    const answer = solve(it.cat, it.an).formula;
+    const wrongTrap = (()=>{ const r=solve(it.cat,it.an); return (r.a===r.b && r.a>1) ? `${r.cat.token}${r.a}${r.an.token}${r.b}` : null; })();
+    const pill = el('span',{class:'diff-pill '+(it.d==='Simple'?'diff-simple':'diff-challenge')}, it.d);
+    const input = el('input',{type:'text',placeholder:'formula',autocapitalize:'off',autocomplete:'off',spellcheck:'false'});
+    const checkBtn = el('button',{class:'reveal-btn'},'Check');
+    const revealBtn = el('button',{},'Show the 4 moves');
+    const msg = el('div',{class:'chk-msg'});
+    const rev = el('div',{class:'reveal-content',hidden:'',html: workedFor(it.cat,it.an)});
+    let counted=false;
+    function mark(){ if(!counted){ counted=true; done++; bar.querySelector('.pb-fill').style.width=(done/items.length*100)+'%'; text.textContent=done===items.length?`All ${items.length} checked`:`${done} of ${items.length} checked`; text.classList.toggle('complete',done===items.length); } }
+    checkBtn.addEventListener('click',()=>{
+      const v = norm(input.value);
+      if(!v){ return; }
+      if(v === norm(answer)){ input.classList.remove('no'); input.classList.add('ok'); msg.className='chk-msg ok'; msg.textContent='Correct.'; mark(); }
+      else if(wrongTrap && v===norm(wrongTrap)){ input.classList.add('no'); msg.className='chk-msg no'; msg.textContent='Reduce to lowest terms — the LCM already did it.'; }
+      else { input.classList.add('no'); msg.className='chk-msg no'; msg.textContent='Not yet — check charges, LCM, and parentheses. Try again or reveal the moves.'; }
+    });
+    input.addEventListener('keydown',e=>{ if(e.key==='Enter') checkBtn.click(); });
+    revealBtn.addEventListener('click',()=>{ const h=rev.hasAttribute('hidden'); rev.toggleAttribute('hidden',!h); revealBtn.textContent=h?'Hide the moves':'Show the 4 moves'; if(h) mark(); });
+    stage.append(el('div',{class:'q-card'},[
+      el('div',{class:'q-head'},[ el('div',{},[el('span',{class:'q-num'},(i+1)+'.'), el('span',{class:'q-name'}, it.name)]), pill ]),
+      el('div',{class:'ans-row'},[input, checkBtn, revealBtn, msg]),
+      rev
+    ]));
+  });
+  stage.append(el('div',{class:'pb-progress'},[bar,text]));
+}
+
+// ---- Step 10: Practice A (binary + transition) ----
+scenes.push({
+  seeLabel: 'Practice A',
+  heading: 'Step 10: Practice A — Binary & Transition (10 Questions)',
+  notes: "<strong>Isolate the method.</strong> These ten are all binary — main-group metals and transition metals — with <strong>no polyatomics yet</strong>, so all your attention stays on charges, LCM, and reducing. Watch the equal-charge traps: Calcium oxide is <strong>CaO</strong>, Magnesium oxide is <strong>MgO</strong>, never Ca₂O₂ or Mg₂O₂.",
+  notebook: "Number your page <strong>1 to 10</strong>. Write your formula for each <strong>before</strong> you check it, then copy the 4-move solution underneath and fix anything you missed.",
+  build(stage) {
+    practiceStep(stage, [
+      { name:'Sodium chloride', cat:'Sodium', an:'Chloride', d:'Simple' },
+      { name:'Calcium oxide', cat:'Calcium', an:'Oxide', d:'Challenge' },
+      { name:'Aluminum oxide', cat:'Aluminum', an:'Oxide', d:'Simple' },
+      { name:'Iron(II) oxide', cat:'Iron(II)', an:'Oxide', d:'Challenge' },
+      { name:'Potassium sulfide', cat:'Potassium', an:'Sulfide', d:'Simple' },
+      { name:'Iron(III) oxide', cat:'Iron(III)', an:'Oxide', d:'Challenge' },
+      { name:'Magnesium oxide', cat:'Magnesium', an:'Oxide', d:'Simple' },
+      { name:'Copper(II) chloride', cat:'Copper(II)', an:'Chloride', d:'Challenge' },
+      { name:'Aluminum sulfide', cat:'Aluminum', an:'Sulfide', d:'Simple' },
+      { name:'Copper(I) oxide', cat:'Copper(I)', an:'Oxide', d:'Challenge' }
+    ], 'Type each formula, press Check, then reveal the 4 moves to copy down.');
+  }
+});
+
+// ---- Step 11: Practice B (polyatomic mixed) ----
+scenes.push({
+  seeLabel: 'Practice B',
+  heading: 'Step 11: Practice B — Polyatomic Mixed (10 Questions)',
+  notes: "<strong>Everything at once.</strong> These mix polyatomic ions with transition metals — the hardest, most realistic cases. Keep each polyatomic <strong>whole</strong>, run the same LCM method, and add <strong>parentheses only when the unit count is 2 or more</strong>. Sodium nitrate stays <strong>NaNO₃</strong>; Calcium nitrate becomes <strong>Ca(NO₃)₂</strong>.",
+  notebook: "Number <strong>1 to 10</strong>. Predict how many will NEED parentheses (unit count ≥ 2), then check as you go. Copy each 4-move solution and note one line: “A parentheses mistake I need to watch is ____.”",
+  build(stage) {
+    practiceStep(stage, [
+      { name:'Sodium nitrate', cat:'Sodium', an:'Nitrate', d:'Simple' },
+      { name:'Calcium nitrate', cat:'Calcium', an:'Nitrate', d:'Challenge' },
+      { name:'Magnesium hydroxide', cat:'Magnesium', an:'Hydroxide', d:'Simple' },
+      { name:'Ammonium chloride', cat:'Ammonium', an:'Chloride', d:'Challenge' },
+      { name:'Aluminum sulfate', cat:'Aluminum', an:'Sulfate', d:'Simple' },
+      { name:'Ammonium sulfate', cat:'Ammonium', an:'Sulfate', d:'Challenge' },
+      { name:'Calcium phosphate', cat:'Calcium', an:'Phosphate', d:'Simple' },
+      { name:'Iron(III) hydroxide', cat:'Iron(III)', an:'Hydroxide', d:'Challenge' },
+      { name:'Copper(II) nitrate', cat:'Copper(II)', an:'Nitrate', d:'Simple' },
+      { name:'Sodium phosphate', cat:'Sodium', an:'Phosphate', d:'Challenge' }
+    ], 'Keep the polyatomic whole; parentheses only when its count is 2 or more.');
+  }
+});
+
+// ---- Step 12: Your Questions ----
+scenes.push({
+  seeLabel: 'Your questions',
+  heading: 'Step 12: What Are You Wondering?',
+  notes: "<strong>You can now write any ionic formula.</strong> You read the charges (group position or Roman numeral), used the <strong>LCM</strong> for lowest terms, kept polyatomic ions whole, and added parentheses only when the count passed 1. Next cycle we run it in reverse — <strong>formula back to name</strong> — and watch these ions <strong>react</strong>. Post what is still fuzzy so we hit it first.",
+  notebook: "Write <strong>at least 5 questions</strong> you still have in your notebook. Then type them here with your <strong>name and class</strong> and hit <strong>Submit</strong>. Finish two lines: “One thing I can now DO: ____” and “My question for the class: ____.”",
+  build(stage) {
+    const APP = 'Ionic Formulas';
+    const TEACHER_CODE = 'sparky2026';
+    const inS = 'font-family:var(--font-sans);font-size:14px;padding:9px 12px;border:1px solid var(--borderColor);border-radius:9px;background:#fff;color:var(--textPrimary)';
+    const name = el('input',{type:'text',placeholder:'Your name',style:inS+';flex:2;min-width:0'});
+    const klass = el('input',{type:'text',placeholder:'Class / period',style:inS+';flex:1;min-width:0'});
+    stage.append(el('div',{style:'display:flex;gap:8px;margin-top:4px'},[name,klass]));
+    const inputs = [];
+    const wrap = el('div',{style:'display:flex;flex-direction:column;gap:8px;margin-top:8px'});
+    for (let i=0;i<5;i++){ const inp = el('input',{type:'text',placeholder:'I wonder...',style:inS+';flex:1;min-width:0'}); inputs.push(inp);
+      wrap.append(el('div',{style:'display:flex;align-items:center;gap:10px'},[ el('div',{class:'q-num',style:'min-width:20px'},(i+1)+'.'), inp ])); }
+    stage.append(wrap);
+    const btn = el('button',{class:'primary',style:'margin-top:2px'},'Submit my questions');
+    const msg = el('div',{class:'status-line',style:'text-align:left;min-height:0'});
+    stage.append(el('div',{style:'display:flex;align-items:center;gap:12px;margin-top:2px'},[btn, msg]));
+    const feed = el('div',{style:'flex:1 1 240px;min-width:0;max-height:210px;overflow:auto;border:1px solid var(--borderColor);border-radius:10px;background:#fff'});
+    const cloud = el('div',{style:'flex:1 1 240px;min-width:0;max-height:210px;overflow:auto;border:1px solid var(--borderColor);border-radius:10px;background:var(--bgMain);padding:10px;text-align:center;align-content:center'});
+    stage.append(el('div',{class:'eyebrow-sm',style:'margin-top:14px'},'What the class is wondering'));
+    stage.append(el('div',{style:'display:flex;flex-wrap:wrap;gap:12px;margin-top:6px'},[feed, cloud]));
+    const tParam = new URLSearchParams(location.search).get('teacher');
+    if (tParam === '1') { try { localStorage.setItem('classq_teacher','1'); } catch(e){} }
+    if (tParam === '0') { try { localStorage.removeItem('classq_teacher'); } catch(e){} }
+    let isTeacher = tParam === '1';
+    if (tParam !== '0') { try { isTeacher = isTeacher || localStorage.getItem('classq_teacher') === '1'; } catch(e){} }
+    if (isTeacher) {
+      const tCode = el('input',{type:'password',placeholder:'Teacher passcode',style:inS+';max-width:190px'});
+      const clearBtn = el('button',{style:'font-size:12px;padding:7px 12px;color:var(--accentRed);border:1px solid var(--borderColor);background:#fff'},'Clear all questions (teacher)');
+      const tMsg = el('div',{class:'status-line',style:'text-align:left;min-height:0;font-size:12px'});
+      let armed = false;
+      clearBtn.addEventListener('click', async () => {
+        if (tCode.value !== TEACHER_CODE) { tMsg.textContent = 'Wrong passcode.'; armed=false; return; }
+        if (!armed) { armed=true; tMsg.textContent=''; clearBtn.textContent='Click again to clear ALL questions'; return; }
+        clearBtn.disabled=true; clearBtn.textContent='Clearing...';
+        try { await window.ClassQ.clear(APP); clearBtn.textContent='Cleared'; } catch(e){ tMsg.textContent='Could not clear, try again.'; }
+        setTimeout(()=>{ armed=false; clearBtn.disabled=false; clearBtn.textContent='Clear all questions (teacher)'; },1500);
+      });
+      stage.append(el('div',{style:'display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap'},[tCode, clearBtn]), tMsg);
+    }
+    const STOP = new Set('the a an is are do does of to in on and or why what how when it they that this for with as be can will if so i we you my me their there not have has was were which at by from more than into out up down one two all some about us our your his her also it’s'.split(' '));
+    function paint(items){
+      feed.innerHTML='';
+      const qlist=[]; (items||[]).forEach(it => (it.questions||[]).forEach(q => { if(q) qlist.push({q, who:(it.name||'Anon'), kl:(it.klass||'')}); }));
+      if(!qlist.length){ feed.innerHTML='<div class="caption" style="padding:16px">Be the first: submit a question.</div>'; }
+      else qlist.forEach(r => feed.append(el('div',{style:'padding:8px 11px;border-bottom:1px solid var(--borderSubtle)'},[
+        el('div',{style:'font-size:13.5px;color:var(--textPrimary);line-height:1.4'}, r.q),
+        el('div',{style:'font-family:var(--font-mono);font-size:10px;color:var(--textWarmMuted);margin-top:2px'}, r.who + (r.kl?(' · '+r.kl):'')) ])));
+      const freq={}; (items||[]).forEach(it => (it.questions||[]).forEach(q => (q||'').toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).forEach(w => { if(w.length>2 && !STOP.has(w)) freq[w]=(freq[w]||0)+1; })));
+      const words=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,36);
+      cloud.innerHTML='';
+      if(!words.length){ cloud.innerHTML='<div class="caption">Common words appear here as the class submits.</div>'; }
+      else { const max=words[0][1], pal=['#6366f1','#a855f7','#7c3aed','#4f46e5','#8b5cf6'];
+        words.forEach(([w,n],i)=> cloud.append(el('span',{style:`display:inline-block;margin:3px 7px;font-family:var(--font-sans);font-weight:700;line-height:1.05;font-size:${13+Math.round((n/max)*22)}px;color:${pal[i%pal.length]};opacity:${(0.55+0.45*(n/max)).toFixed(2)}`}, w))); }
+    }
+    paint([]);
+    function wireLive(){ if(window._qUnsub){ try{window._qUnsub();}catch(e){} window._qUnsub=null; } if(window.ClassQ){ window._qUnsub = window.ClassQ.subscribe(APP, paint); } }
+    if(window.ClassQ) wireLive(); else window.addEventListener('classq-ready', wireLive, {once:true});
+    const BAD=/\b(fuck|shit|bitch|damn|crap|ass|dick|piss)\b/i;
+    btn.addEventListener('click', async () => {
+      const qsv = inputs.map(i=>i.value.trim()).filter(Boolean);
+      if(!name.value.trim() || !klass.value.trim()){ msg.textContent='Add your name and class first.'; msg.classList.remove('complete'); return; }
+      if(!qsv.length){ msg.textContent='Type at least one question first.'; msg.classList.remove('complete'); return; }
+      if(BAD.test(name.value) || BAD.test(klass.value) || qsv.some(q=>BAD.test(q))){ msg.textContent='Keep it school-appropriate, please.'; msg.classList.remove('complete'); return; }
+      btn.disabled=true; btn.textContent='Submitting...'; msg.textContent='';
+      try {
+        if(!window.ClassQ) throw new Error('offline');
+        await window.ClassQ.submit({ app:APP, name:name.value.trim(), klass:klass.value.trim(), questions:qsv });
+        btn.textContent='Submitted'; msg.textContent = (window.ClassQ.mode==='live') ? 'Thanks! Added below for the class.' : 'Added below (demo mode on this device).'; msg.classList.add('complete');
+        inputs.forEach(i=>i.value='');
+      } catch(err){ btn.disabled=false; btn.textContent='Submit my questions'; msg.textContent='Could not submit, try again.'; msg.classList.remove('complete'); }
+    });
+  }
+});
+
+// =====================================================
+//  Nav controller
+// =====================================================
+const stageEl=$('#stage'), stageLabel=$('#stageLabel'), stepHeadingEl=$('#stepHeading'),
+  notesEl=$('#notes'), notebookTextEl=$('#notebookText'), stepIndicator=$('#stepIndicator'),
+  stepNumEl=$('#stepNum'), stepTitleEl=$('#stepTitle'), progressFill=$('#progressFill'),
+  prevBtn=$('#prevBtn'), nextBtn=$('#nextBtn'), resetBtn=$('#resetBtn');
+let current = 0;
+const pad2 = n => n < 10 ? '0'+n : ''+n;
+function setScene(i) {
+  current = i; currentTick = null;
+  if (window._qUnsub) { try { window._qUnsub(); } catch(e){} window._qUnsub = null; }
+  const s = scenes[i];
+  stageEl.innerHTML = '';
+  const shortTitle = s.heading.replace(/^Step \d+:\s*/, '');
+  stageLabel.textContent = s.seeLabel || 'What you see';
+  stepHeadingEl.textContent = 'Step ' + (i+1) + ': ' + shortTitle;
+  stepNumEl.textContent = 'Step ' + pad2(i+1);
+  stepTitleEl.textContent = shortTitle;
+  notesEl.innerHTML = s.notes; notebookTextEl.innerHTML = s.notebook;
+  stepIndicator.textContent = `${pad2(i+1)} / ${pad2(scenes.length)}`;
+  progressFill.style.width = ((i+1)/scenes.length*100) + '%';
+  prevBtn.disabled = i === 0; nextBtn.disabled = i === scenes.length-1;
+  nextBtn.innerHTML = i === scenes.length-1 ? 'Done' : 'Next ' + ICON.right;
+  s.build(stageEl);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+prevBtn.addEventListener('click', () => { if (current>0) setScene(current-1); });
+nextBtn.addEventListener('click', () => { if (current<scenes.length-1) setScene(current+1); });
+resetBtn.addEventListener('click', () => setScene(0));
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight' && current<scenes.length-1) setScene(current+1);
+  if (e.key === 'ArrowLeft' && current>0) setScene(current-1);
+});
+setScene(0);
+</script>
+<script type="module">
+const firebaseConfig = { apiKey:"PASTE_FIREBASE_apiKey", authDomain:"PASTE_FIREBASE_authDomain", projectId:"PASTE_FIREBASE_projectId", appId:"PASTE_FIREBASE_appId" };
+const configured = !JSON.stringify(firebaseConfig).includes('PASTE_');
+const listeners = {}, key = a => 'classq:' + a;
+const readLocal = a => { try { return JSON.parse(localStorage.getItem(key(a)) || '[]'); } catch(e){ return []; } };
+const notifyLocal = a => (listeners[a]||[]).forEach(cb => cb(readLocal(a)));
+function setLocal(){
+  window.ClassQ = { mode:'demo',
+    async submit(p){ const r={app:p.app,name:p.name||'',klass:p.klass||'',questions:p.questions||[],created:Date.now()}; const arr=readLocal(r.app); arr.unshift(r); localStorage.setItem(key(r.app), JSON.stringify(arr.slice(0,300))); notifyLocal(r.app); },
+    subscribe(a,cb){ (listeners[a]=listeners[a]||[]).push(cb); cb(readLocal(a)); return ()=>{ listeners[a]=(listeners[a]||[]).filter(x=>x!==cb); }; },
+    async clear(a){ localStorage.removeItem(key(a)); notifyLocal(a); } };
+}
+async function init(){
+  if (!configured) { setLocal(); }
+  else { try {
+      const appMod = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+      const fs = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const db = fs.getFirestore(appMod.initializeApp(firebaseConfig));
+      window.ClassQ = { mode:'live',
+        async submit(p){ await fs.addDoc(fs.collection(db,'questions'), {app:p.app,name:p.name||'',klass:p.klass||'',questions:p.questions||[],created:Date.now()}); },
+        subscribe(a,cb){ const qy=fs.query(fs.collection(db,'questions'), fs.where('app','==',a), fs.limit(400));
+          return fs.onSnapshot(qy, snap=>{ const list=[]; snap.forEach(d=>list.push(d.data())); list.sort((x,y)=>(y.created||0)-(x.created||0)); cb(list); }, ()=>cb([])); },
+        async clear(a){ const snap=await fs.getDocs(fs.query(fs.collection(db,'questions'), fs.where('app','==',a))); for (const dd of snap.docs){ await fs.deleteDoc(dd.ref); } } };
+    } catch(e){ setLocal(); } }
+  window.dispatchEvent(new Event('classq-ready'));
+}
+init();
+</script>
+</body>
+</html>
