@@ -421,8 +421,8 @@ const scenes = [];
 scenes.push({
   seeLabel: 'Memory bridge',
   heading: 'Step 1: From Atoms to Ions — Our New Job',
-  notes: "<strong>Today's one job:</strong> given the NAME of an ionic compound, write its correct chemical FORMULA. In the Atomic Structure app, atoms became <strong>ions</strong> by <strong>losing</strong> or <strong>gaining</strong> electrons. A charged atom is an <strong>ion</strong>. A formula is just a <strong>headcount</strong> of ions — how many of each are locked together.",
-  notebook: "Before you press replay, <strong>predict and write</strong> one word: when sodium becomes an ion, does it end up <strong>positive</strong> or <strong>negative</strong>? Then copy the mission: \"Given the NAME, I write the FORMULA,\" and fill the blanks — atoms become ions by ____ or ____ electrons.",
+  notes: "<strong>Today's one job:</strong> given the NAME of an ionic compound, write its FORMULA. Atoms became <strong>ions</strong> in the Atomic Structure app by <strong>losing</strong> or <strong>gaining</strong> electrons. The <strong>metal keeps its name</strong> (sodium), but the <strong>nonmetal takes an “-ide” ending</strong>: chlorine → chlor<strong>ide</strong>. So sodium + chlorine is <strong>sodium chloride</strong>, and the formula is a headcount of those ions: <strong>NaCl</strong>.",
+  notebook: "Press <strong>Replay</strong> and watch the transfer. <strong>Predict and write</strong>: sodium becomes Na<sup>__</sup> and chlorine becomes Cl<sup>__</sup> (which charge each?). Then write the name change: chlorine → ______, so the compound is ______ ______ = <strong>NaCl</strong> (not “sodium chlorine”).",
   build(stage) {
     const { ctx } = makeCanvas(stage, 520, 300);
     let phase='idle', t=0;
@@ -439,13 +439,16 @@ scenes.push({
       if(phase==='move'){ const sx=NaX+BOHR_R[3], sy=cy, tx=ClX-BOHR_R[3]-4, ty=cy;
         const ex=sx+(tx-sx)*t, ey=sy+(ty-sy)*t-Math.sin(t*Math.PI)*34;
         ctx.fillStyle='#a855f7'; ctx.beginPath(); ctx.arc(ex,ey,6,0,Math.PI*2); ctx.fill(); }
-      // labels
-      ctx.textAlign='center'; ctx.font='700 11px Roboto Mono'; ctx.fillStyle='#57534e';
-      ctx.fillText(done?'CATION (Na⁺)':'sodium atom', NaX, cy+72);
-      ctx.fillText(done?'ANION (Cl⁻)':'chlorine atom', ClX, cy+72);
-      // arrow to formula slot
-      ctx.fillStyle='#a0937b'; ctx.font='italic 12px Inter';
-      ctx.fillText(done? 'name  →  formula: NaCl' : 'name  →  ? ? ?', 260, 250);
+      // element/ion names — the METAL keeps its name; the NONMETAL takes an -ide ending
+      ctx.textAlign='center'; ctx.font='700 11px Roboto Mono';
+      ctx.fillStyle = done ? '#b45309' : '#57534e';
+      ctx.fillText(done ? 'sodium · Na⁺ (cation)' : 'sodium (metal)', NaX, cy+74);
+      ctx.fillStyle = done ? '#0f766e' : '#57534e';
+      ctx.fillText(done ? 'chloride · Cl⁻ (anion)' : 'chlorine (nonmetal)', ClX, cy+74);
+      if (done) { ctx.fillStyle='#0f766e'; ctx.font='italic 10px Inter'; ctx.fillText('chlorine → chloride (name changes)', ClX, cy+90); }
+      // name -> formula slot
+      ctx.fillStyle = done ? '#57534e' : '#a0937b'; ctx.font = (done?'700 ':'italic ')+'13px Inter';
+      ctx.fillText(done ? 'sodium chloride  →  NaCl' : 'sodium + chlorine  →  ? ? ?', 260, 260);
     };
     stage.append(el('div',{class:'tool-row'},[btn]),
       el('div',{class:'caption'},'You met ions in the Atomic Structure app. Now you learn where they come from — and how their names hide a formula.'));
