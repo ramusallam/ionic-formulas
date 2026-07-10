@@ -76,9 +76,9 @@
   /* formula + ion chips */
   .formula { font-family: var(--font-serif); font-weight: 700; letter-spacing: 0.5px; }
   .formula sub { font-size: 0.62em; }
-  .ion-chip { display: inline-flex; align-items: baseline; gap: 1px; font-family: var(--font-serif); font-weight: 700; padding: 6px 12px; border-radius: 10px; font-size: 20px; }
-  .ion-chip sup { font-size: 0.6em; font-family: var(--font-mono); }
-  .ion-chip sub { font-size: 0.62em; }
+  .ion-chip { display: inline-block; font-family: var(--font-serif); font-weight: 700; padding: 6px 12px; border-radius: 10px; font-size: 20px; white-space: nowrap; }
+  .ion-chip sup { font-size: 0.58em; font-family: var(--font-mono); vertical-align: super; }
+  .ion-chip sub { font-size: 0.6em; vertical-align: sub; }
   .ion-chip.cat { background: rgba(217,119,6,0.12); color: #b45309; border: 1px solid rgba(217,119,6,0.35); }
   .ion-chip.an { background: rgba(13,148,136,0.12); color: #0f766e; border: 1px solid rgba(13,148,136,0.35); }
 
@@ -348,27 +348,62 @@ function drawBulb(ctx, x, y, b) {
   ctx.beginPath(); ctx.moveTo(x-5,y+2); ctx.lineTo(x-2,y-5); ctx.lineTo(x+2,y+1); ctx.lineTo(x+5,y-5); ctx.stroke();
 }
 // Bohr atom: nucleus symbol + shells of electrons
-const BOHR_R = [0, 24, 44, 64];
-function drawBohr(ctx, cx, cy, sym, shells, opts={}) {
-  // shell rings + electrons
-  for (let i=0;i<shells.length;i++){ const r=BOHR_R[i+1]; if(!r) continue;
-    const isVal = i===shells.length-1;
-    ctx.strokeStyle = (opts.valGlow && isVal) ? 'rgba(168,85,247,0.55)' : 'rgba(99,102,241,0.30)';
-    ctx.setLineDash([3,6]); ctx.lineWidth=1.3; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
-    const n=shells[i]; for(let k=0;k<n;k++){ const a=(k/n)*Math.PI*2 - Math.PI/2 + (opts.spin||0)*(i%2?-1:1);
-      const ex=cx+Math.cos(a)*r, ey=cy+Math.sin(a)*r;
-      const hot = opts.hotValence && isVal && k===n-1;
-      ctx.fillStyle = hot ? '#a855f7' : '#6366f1';
-      const rr = hot ? 5.5 : 4.5;
-      if(hot){ const gg=ctx.createRadialGradient(ex,ey,0,ex,ey,12); gg.addColorStop(0,'rgba(168,85,247,0.6)'); gg.addColorStop(1,'rgba(168,85,247,0)'); ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(ex,ey,12,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#a855f7'; }
-      ctx.beginPath(); ctx.arc(ex,ey,rr,0,Math.PI*2); ctx.fill();
+const BOHR_R = [0, 22, 40, 58];
+// Buzzing electron cloud (same feel as the Atomic Structure app): electrons wander
+// on a random walk with radial breathing and jitter, leaving a fading trail — NOT fixed orbits.
+function buzzCloud(nShells) {
+  const shells = Array.from({ length: nShells }, () => []);
+  return {
+    shells,
+    occ() { return shells.reduce((m, a, i) => a.length ? i : m, -1); },
+    setCounts(counts) {
+      for (let i = 0; i < shells.length; i++) {
+        const want = counts[i] || 0, arr = shells[i];
+        while (arr.length < want) arr.push({ ang: Math.random()*Math.PI*2, av: (Math.random()-0.5)*0.03, rPhase: Math.random()*Math.PI*2, rSpeed: 0.6+Math.random()*0.9, jx: 0, jy: 0, trail: [] });
+        while (arr.length > want) arr.pop();
+      }
+    },
+    update(dt) {
+      const f = dt * 0.06;
+      for (let i = 0; i < shells.length; i++) {
+        const dir = (i % 2) ? -1 : 1, buzz = 0.5 + i * 0.75;
+        for (const p of shells[i]) {
+          p.av += (Math.random()-0.5) * (0.010 + i*0.006);
+          p.av = Math.max(-0.07, Math.min(0.07, p.av)) * 0.94;
+          p.ang += p.av + dir * 0.0009 * f;
+          p.rPhase += 0.004 * p.rSpeed * f;
+          p.jx = (p.jx + (Math.random()-0.5)*buzz) * 0.82;
+          p.jy = (p.jy + (Math.random()-0.5)*buzz) * 0.82;
+        }
+      }
+    },
+    draw(ctx, cx, cy, opts = {}) {
+      const occ = this.occ();
+      for (let i = 0; i < shells.length; i++) {
+        if (!shells[i].length) continue;
+        const r = BOHR_R[i+1], isVal = opts.valence && i === occ;
+        ctx.strokeStyle = isVal ? 'rgba(168,85,247,0.42)' : 'rgba(99,102,241,0.28)';
+        ctx.setLineDash([3,6]); ctx.lineWidth = 1.3; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+        const glow = isVal ? '168,85,247' : '129,140,248', core = isVal ? '#a855f7' : '#6366f1';
+        for (const p of shells[i]) {
+          const rr = r + Math.sin(p.rPhase) * (3 + i*3);
+          const ex = cx + Math.cos(p.ang)*rr + p.jx, ey = cy + Math.sin(p.ang)*rr + p.jy;
+          p.trail.unshift({ x: ex, y: ey }); if (p.trail.length > 5) p.trail.pop();
+          for (let k = p.trail.length-1; k > 0; k--) { const tp = p.trail[k], a = (1 - k/p.trail.length) * 0.2;
+            ctx.fillStyle = `rgba(${glow},${a})`; ctx.beginPath(); ctx.arc(tp.x, tp.y, 3.4, 0, Math.PI*2); ctx.fill(); }
+          const g = ctx.createRadialGradient(ex, ey, 0, ex, ey, 9); g.addColorStop(0, `rgba(${glow},0.5)`); g.addColorStop(1, `rgba(${glow},0)`);
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(ex, ey, 9, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = core; ctx.beginPath(); ctx.arc(ex, ey, 4, 0, Math.PI*2); ctx.fill();
+        }
+      }
     }
-  }
-  // nucleus
-  const ng=ctx.createRadialGradient(cx-4,cy-4,2,cx,cy,20); ng.addColorStop(0,'#c7d2fe'); ng.addColorStop(1,'#818cf8');
-  ctx.fillStyle=ng; ctx.beginPath(); ctx.arc(cx,cy,18,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='#1e1b4b'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.font='700 15px Roboto Serif, serif'; ctx.fillText(sym, cx, cy);
-  if (opts.badge){ ctx.fillStyle=opts.badgeCol||'#d97706'; ctx.font='700 14px Roboto Mono'; ctx.fillText(opts.badge, cx+BOHR_R[shells.length]+16, cy-BOHR_R[shells.length]-2); }
+  };
+}
+function drawNuc(ctx, cx, cy, sym, badge, badgeCol, outerR) {
+  const ng = ctx.createRadialGradient(cx-4, cy-4, 2, cx, cy, 18); ng.addColorStop(0, '#c7d2fe'); ng.addColorStop(1, '#818cf8');
+  ctx.fillStyle = ng; ctx.beginPath(); ctx.arc(cx, cy, 15, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#1e1b4b'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '700 14px Roboto Serif, serif'; ctx.fillText(sym, cx, cy);
+  if (badge) { const or = outerR || 54; ctx.fillStyle = badgeCol || '#d97706'; ctx.font = '700 15px Roboto Mono'; ctx.textAlign = 'left'; ctx.fillText(badge, cx + or + 8, cy - or - 2); }
 }
 function driftFree(p, dt, bounds, pullX) {
   p.vx=(p.vx||0)+(Math.random()-0.5)*0.26; p.vy=(p.vy||0)+(Math.random()-0.5)*0.26;
@@ -451,19 +486,27 @@ scenes.push({
   build(stage) {
     const { ctx } = makeCanvas(stage, 520, 300);
     let phase='idle', t=0;
-    const NaX=150, ClX=330, cy=150;
+    const NaX=145, ClX=355, cy=142;
+    const na = buzzCloud(3), cl = buzzCloud(3);
     const btn = el('button',{class:'primary',html:'Replay the electron transfer '+ICON.replay});
-    btn.addEventListener('click',()=>{ phase='move'; t=0; });
+    btn.addEventListener('click',()=>{ if(phase!=='move'){ phase='move'; t=0; } });
     currentTick = (dt) => {
       ctx.clearRect(0,0,520,300);
       if(phase==='move'){ t=Math.min(1,t+dt/1100); if(t>=1) phase='done'; }
       const done = phase==='done';
-      // atoms (Na 2,8,1 -> Na+ ; Cl 2,8,7 -> Cl- 2,8,8)
-      drawBohr(ctx, NaX, cy, 'Na', done?[2,8]:[2,8,1], { hotValence: phase!=='done', badge: done?'+':'', badgeCol:'#d97706' });
-      drawBohr(ctx, ClX, cy, 'Cl', done?[2,8,8]:[2,8,7], { badge: done?'−':'', badgeCol:'#0d9488' });
-      if(phase==='move'){ const sx=NaX+BOHR_R[3], sy=cy, tx=ClX-BOHR_R[3]-4, ty=cy;
-        const ex=sx+(tx-sx)*t, ey=sy+(ty-sy)*t-Math.sin(t*Math.PI)*34;
-        ctx.fillStyle='#a855f7'; ctx.beginPath(); ctx.arc(ex,ey,6,0,Math.PI*2); ctx.fill(); }
+      // Na 2,8,1 -> Na+ (its 1 valence electron is lifted out while moving/after); Cl 2,8,7 -> Cl- 2,8,8
+      na.setCounts([2, 8, phase==='idle' ? 1 : 0]);
+      cl.setCounts([2, 8, done ? 8 : 7]);
+      na.update(dt); cl.update(dt);
+      na.draw(ctx, NaX, cy, { valence:true }); cl.draw(ctx, ClX, cy, { valence:true });
+      drawNuc(ctx, NaX, cy, 'Na', done?'+':'', '#d97706', BOHR_R[na.occ()+1]);
+      drawNuc(ctx, ClX, cy, 'Cl', done?'−':'', '#0d9488', BOHR_R[cl.occ()+1]);
+      // the transferring electron flies across, glowing purple like the excited electron in the Atomic Structure app
+      if(phase==='move'){ const sx=NaX+BOHR_R[3], tx=ClX-BOHR_R[3]-2;
+        const ex=sx+(tx-sx)*t, ey=cy-Math.sin(t*Math.PI)*32;
+        const g=ctx.createRadialGradient(ex,ey,0,ex,ey,12); g.addColorStop(0,'rgba(168,85,247,0.6)'); g.addColorStop(1,'rgba(168,85,247,0)');
+        ctx.fillStyle=g; ctx.beginPath(); ctx.arc(ex,ey,12,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle='#a855f7'; ctx.beginPath(); ctx.arc(ex,ey,4.5,0,Math.PI*2); ctx.fill(); }
       // element/ion names — the METAL keeps its name; the NONMETAL takes an -ide ending
       ctx.textAlign='center'; ctx.font='700 11px Roboto Mono';
       ctx.fillStyle = done ? '#b45309' : '#57534e';
@@ -609,21 +652,30 @@ scenes.push({
       : `${p.a} has ${p.sa[p.sa.length-1]} outer electron(s); ${p.b} needs ${8-p.sb[p.sb.length-1]} to fill its shell.`; }
     const btn = el('button',{class:'primary',html:'Transfer the electron(s) '+ICON.right});
     btn.addEventListener('click',()=>{ if(phase==='idle'){ phase='move'; t=0; moved=0; } });
-    const NaX=150, ClX=350, cy=150;
+    const NaX=145, ClX=355, cy=142;
+    const A = buzzCloud(3), B = buzzCloud(3);
     currentTick = (dt) => {
       ctx.clearRect(0,0,520,300); const p=pairs[key];
       if(phase==='move'){ t+=dt/900; if(t>=1){ moved++; t=0; if(moved>=p.moved){ phase='done'; setStatus(); } } }
       const done=phase==='done';
-      const aShells = done ? p.sa.slice(0,-1) : p.sa;
-      const bShells = done ? p.sb.slice(0,-1).concat([p.sb[p.sb.length-1]+p.moved]) : p.sb;
-      drawBohr(ctx,NaX,cy,p.a,aShells,{hotValence:!done, valGlow:!done, badge:done?p.ca:'', badgeCol:'#d97706'});
-      drawBohr(ctx,ClX,cy,p.b,bShells,{badge:done?p.cb:'', badgeCol:'#0d9488'});
-      if(phase==='move'){ const sx=NaX+BOHR_R[p.sa.length], tx=ClX-BOHR_R[p.sb.length]-4;
-        const ex=sx+(tx-sx)*t, ey=cy-Math.sin(t*Math.PI)*36;
-        ctx.fillStyle='#a855f7'; ctx.beginPath(); ctx.arc(ex,ey,6,0,Math.PI*2); ctx.fill(); }
+      const aInner=p.sa.slice(0,-1), origA=p.sa[p.sa.length-1];
+      const bInner=p.sb.slice(0,-1), origB=p.sb[p.sb.length-1];
+      const inFlight = phase==='move' ? 1 : 0;
+      const aVal = Math.max(0, origA - moved - inFlight);           // valence electrons lift out one at a time
+      const bVal = origB + (done ? p.moved : moved);                // nonmetal fills as each arrives
+      A.setCounts(aInner.concat([aVal])); B.setCounts(bInner.concat([bVal]));
+      A.update(dt); B.update(dt);
+      A.draw(ctx,NaX,cy,{valence:true}); B.draw(ctx,ClX,cy,{valence:true});
+      drawNuc(ctx,NaX,cy,p.a, done?p.ca:'', '#d97706', BOHR_R[A.occ()+1]);
+      drawNuc(ctx,ClX,cy,p.b, done?p.cb:'', '#0d9488', BOHR_R[B.occ()+1]);
+      if(phase==='move'){ const sx=NaX+BOHR_R[p.sa.length], tx=ClX-BOHR_R[p.sb.length]-2;
+        const ex=sx+(tx-sx)*t, ey=cy-Math.sin(t*Math.PI)*32;
+        const g=ctx.createRadialGradient(ex,ey,0,ex,ey,12); g.addColorStop(0,'rgba(168,85,247,0.6)'); g.addColorStop(1,'rgba(168,85,247,0)');
+        ctx.fillStyle=g; ctx.beginPath(); ctx.arc(ex,ey,12,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle='#a855f7'; ctx.beginPath(); ctx.arc(ex,ey,4.5,0,Math.PI*2); ctx.fill(); }
       ctx.textAlign='center'; ctx.font='700 10px Roboto Mono';
-      ctx.fillStyle='#b45309'; ctx.fillText(done?'CATION':'metal',NaX,cy+78);
-      ctx.fillStyle='#0f766e'; ctx.fillText(done?'ANION':'nonmetal',ClX,cy+78);
+      ctx.fillStyle='#b45309'; ctx.fillText(done?'CATION':'metal',NaX,cy+82);
+      ctx.fillStyle='#0f766e'; ctx.fillText(done?'ANION':'nonmetal',ClX,cy+82);
       btn.disabled = phase!=='idle';
     };
     setStatus();
