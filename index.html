@@ -985,6 +985,7 @@ function setScene(i) {
   prevBtn.disabled = i === 0; nextBtn.disabled = i === scenes.length-1;
   nextBtn.innerHTML = i === scenes.length-1 ? 'Done' : 'Next ' + ICON.right;
   s.build(stageEl);
+  restoreWork(i);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 prevBtn.addEventListener('click', () => { if (current>0) setScene(current-1); });
@@ -995,6 +996,44 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight' && current<scenes.length-1) setScene(current+1);
   if (e.key === 'ArrowLeft' && current>0) setScene(current-1);
 });
+
+// ===== Student work persistence =====
+// Rebuilding a scene wipes anything typed into it, so every input, textarea,
+// and select is keyed by scene + position and restored on re-entry. Saved to
+// localStorage so a page reload keeps student work too.
+const WORK_KEY = 'ionic-formulas-student-work';
+let WORK = {};
+try { WORK = JSON.parse(localStorage.getItem(WORK_KEY)) || {}; } catch(e) { WORK = {}; }
+let workTimer = null;
+function persistWork(){ clearTimeout(workTimer); workTimer = setTimeout(() => { try { localStorage.setItem(WORK_KEY, JSON.stringify(WORK)); } catch(e){} }, 250); }
+function workFields(){ return Array.from(stageEl.querySelectorAll('input, textarea, select')).filter(f => f.type !== 'password' && f.type !== 'file'); }
+function workKey(scene, f, idx){ return scene + ':' + (f.type || f.tagName.toLowerCase()) + ':' + idx; }
+function restoreWork(scene){
+  workFields().forEach((f, idx) => {
+    const k = workKey(scene, f, idx);
+    if (!(k in WORK)) return;
+    const v = WORK[k];
+    if (f.type === 'checkbox' || f.type === 'radio') {
+      if (f.checked !== v) { f.checked = v; f.dispatchEvent(new Event('change', { bubbles: true })); }
+    } else if (String(f.value) !== String(v)) {
+      f.value = v;
+      f.dispatchEvent(new Event('input', { bubbles: true }));
+      f.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  });
+}
+function recordWork(e){
+  const f = e.target;
+  if (!f || !f.matches || !f.matches('input, textarea, select')) return;
+  if (f.type === 'password' || f.type === 'file') return;
+  const idx = workFields().indexOf(f);
+  if (idx < 0) return;
+  WORK[workKey(current, f, idx)] = (f.type === 'checkbox' || f.type === 'radio') ? f.checked : f.value;
+  persistWork();
+}
+stageEl.addEventListener('input', recordWork);
+stageEl.addEventListener('change', recordWork);
+
 setScene(0);
 </script>
 <script type="module">
