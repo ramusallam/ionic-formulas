@@ -953,7 +953,7 @@ function practiceStep(stage, items) {
         setTask('answer:'+j,!!x.checked && norm(x.answer)===solve(it.cat,it.an).formula,scene);
         setTask('solution:'+j,!!x.solutionSeen,scene);
       });
-      next.disabled=!(q.checked && norm(q.answer)===r.formula && q.solutionSeen) || (i===items.length-1 && !canAdvance());
+      next.disabled=!ADMIN && (!(q.checked && norm(q.answer)===r.formula && q.solutionSeen) || (i===items.length-1 && !canAdvance()));
     }
     function feedback(){
       const result=q.checked ? assessFormula(q.answer,it.cat,it.an) : {state:'',message:''};
@@ -970,7 +970,7 @@ function practiceStep(stage, items) {
     if(i>0) previous.removeAttribute('disabled');
     previous.addEventListener('click',()=>{state.index--;save();draw(true);});
     next.addEventListener('click',()=>{if(next.disabled)return;if(state.index<items.length-1){state.index++;save();draw(true);}else setScene(scene+1,true);});
-    const syncNext=()=>{next.disabled=!(q.checked && norm(q.answer)===r.formula && q.solutionSeen)||(i===items.length-1 && !canAdvance());};
+    const syncNext=()=>{next.disabled=!ADMIN && (!(q.checked && norm(q.answer)===r.formula && q.solutionSeen)||(i===items.length-1 && !canAdvance()));};
     stage._syncPracticeNext=syncNext;
     panel.append(el('div',{class:'practice-top'},[counter]),question,
       el('label',{class:'practice-label',for:'practiceFormula'},'Your formula'),input,
@@ -1058,7 +1058,7 @@ scenes.push({
     const tParam = new URLSearchParams(location.search).get('teacher');
     if (tParam === '1') { try { localStorage.setItem('classq_teacher','1'); } catch(e){} }
     if (tParam === '0') { try { localStorage.removeItem('classq_teacher'); } catch(e){} }
-    let isTeacher = tParam === '1';
+    let isTeacher = tParam === '1' || ADMIN;
     if (tParam !== '0') { try { isTeacher = isTeacher || localStorage.getItem('classq_teacher') === '1'; } catch(e){} }
     if (isTeacher) {
       const tCode = el('input',{type:'password',placeholder:'Teacher passcode',style:inS+';max-width:190px'});
@@ -1144,6 +1144,11 @@ const stageEl=$('#stage'), stageLabel=$('#stageLabel'), stepHeadingEl=$('#stepHe
   prevBtn=$('#prevBtn'), nextBtn=$('#nextBtn'), resetBtn=$('#resetBtn');
 let current = 0;
 let requiredTasks=new Map();
+// Teacher admin link (?admin=ionic-ramsey): every step gate is off. ?admin=0 turns it back off.
+const ADMIN=(()=>{try{const a=new URLSearchParams(location.search).get('admin');
+  if(a==='ionic-ramsey')localStorage.setItem('ionic-formulas-admin','1');
+  if(a==='0')localStorage.removeItem('ionic-formulas-admin');
+  return localStorage.getItem('ionic-formulas-admin')==='1';}catch(e){return false;}})();
 const notebookDone=$('#notebookDone'),gateStatus=$('#gateStatus');
 function gateFor(scene=current){
   const key='gate:v1:'+scene;
@@ -1151,14 +1156,14 @@ function gateFor(scene=current){
   if(!WORK[key].tasks || typeof WORK[key].tasks!=='object') WORK[key].tasks={};
   return WORK[key];
 }
-function canAdvance(){ const g=gateFor(); return !!g.notebook && [...requiredTasks.keys()].every(id=>g.tasks[id]===true); }
+function canAdvance(){ if(ADMIN)return true; const g=gateFor(); return !!g.notebook && [...requiredTasks.keys()].every(id=>g.tasks[id]===true); }
 function updateGate(){
   const g=gateFor(),missing=[...requiredTasks].filter(([id])=>g.tasks[id]!==true);
   g.complete=canAdvance();
   notebookDone.checked=!!g.notebook;
   nextBtn.disabled=current===scenes.length-1 || !g.complete;
   nextBtn.setAttribute('aria-describedby','gateStatus');
-  gateStatus.textContent=missing.length?`Still to do (${missing.length}): ${missing[0][1]}.`:!g.notebook?'Finish your notes and notebook task, then confirm above.':'Step complete.';
+  gateStatus.textContent=ADMIN?'Admin view: steps are unlocked.':missing.length?`Still to do (${missing.length}): ${missing[0][1]}.`:!g.notebook?'Finish your notes and notebook task, then confirm above.':'Step complete.';
   if(stageEl._syncPracticeNext)stageEl._syncPracticeNext();
 }
 function requireTask(id,label){ requiredTasks.set(id,label); updateGate(); }
@@ -1246,7 +1251,7 @@ stageEl.addEventListener('change', recordWork);
 // Resume only as far as the first unfinished step, including after an old build.
 const requestedScene=Number.isInteger(WORK.lastScene)?Math.max(0,Math.min(scenes.length-1,WORK.lastScene)):0;
 let resumeScene=0;
-while(resumeScene<requestedScene && gateFor(resumeScene).complete===true)resumeScene++;
+while(resumeScene<requestedScene && (ADMIN || gateFor(resumeScene).complete===true))resumeScene++;
 current=resumeScene;
 setScene(resumeScene);
 </script>
