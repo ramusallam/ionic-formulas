@@ -218,6 +218,10 @@
   .practice-solution .formula { display:block; font-size:26px; margin-top:8px; }
   .practice-nav { border-top:1px solid var(--borderSubtle); padding-top:12px; margin-top:12px; }
   .pb-text { text-transform:none; letter-spacing:0; font-variant-numeric:tabular-nums; }
+  button.primary:disabled { background:var(--borderColor); border-color:var(--borderColor); color:var(--textSecondary); box-shadow:none; opacity:1; }
+  .step-check { display:flex; align-items:flex-start; gap:10px; font-size:14px; line-height:1.45; cursor:pointer; }
+  .step-check input { width:20px; height:20px; margin:0; flex-shrink:0; accent-color:var(--accentBlue); }
+  .gate-status { font-size:13px; line-height:1.45; color:var(--textSecondary); margin:0; }
   [hidden] { display:none !important; }
   @media (max-width:980px) {
     .workspace { grid-template-columns:1fr; }
@@ -269,6 +273,8 @@
         <div class="np-tag"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>DO</div>
         <div id="notebookText"></div>
       </div>
+      <label class="step-check"><input type="checkbox" id="notebookDone" aria-describedby="gateStatus" />My notes and notebook task are complete.</label>
+      <p class="gate-status" id="gateStatus" role="status" aria-live="polite"></p>
       <nav>
         <button id="resetBtn" title="Return to the first step without clearing your work">Back to start</button>
         <div class="btn-group">
@@ -507,6 +513,9 @@ requestAnimationFrame(loop);
 //  Shared UI: the animated "method machine" (Steps 5-9)
 // =====================================================
 function methodMachine(host, catName, anName, opts={}) {
+  const scene=current, task='method:'+catName+'|'+anName;
+  requireTask(task, catName+' '+anName.toLowerCase()+' - reveal all four moves and the formula');
+  (opts.compare||[]).forEach(([c,a])=>requireTask('method:'+c+'|'+a,c+' '+a.toLowerCase()+' - reveal all four moves and the formula'));
   host.innerHTML = '';
   const r = solve(catName, anName);
   const machine = el('div',{class:'machine'});
@@ -548,9 +557,10 @@ function methodMachine(host, catName, anName, opts={}) {
     }
     if (opts.compare) {
       const row = el('div',{class:'tool-row',style:'margin-top:12px'});
-      opts.compare.forEach(([cn,an2,lbl]) => row.append(el('button',{onclick(){ methodMachine(host, cn, an2, {...opts, auto:true}); }}, lbl)));
+      opts.compare.forEach(([cn,an2,lbl]) => row.append(el('button',{onclick(){ methodMachine(host, cn, an2, {...opts, auto:false}); }}, lbl)));
       finalWrap.append(el('div',{class:'eyebrow-sm',style:'text-align:center;margin-top:12px'},'Run it again'), row);
     }
+    finishTask(task,scene);
   }
   nextBtn.addEventListener('click',()=>{
     if (shown < moves.length){ const m=moves[shown]; movesWrap.append(el('div',{class:'move'},[el('div',{class:'m-lab'},m.lab), el('div',{class:'m-body',html:m.html})])); shown++;
@@ -572,6 +582,8 @@ scenes.push({
   notes: "<strong>Today's one job:</strong> given the NAME of an ionic compound, write its FORMULA. Atoms became <strong>ions</strong> in the Atomic Structure app by <strong>losing</strong> or <strong>gaining</strong> electrons. The <strong>metal keeps its name</strong> (sodium), but the <strong>nonmetal takes an “-ide” ending</strong>: chlorine → chlor<strong>ide</strong>. So sodium + chlorine is <strong>sodium chloride</strong>, and the formula is a headcount of those ions: <strong>NaCl</strong>.",
   notebook: "Press <strong>Replay</strong> and watch the transfer. <strong>Predict and write</strong>: sodium becomes Na<sup>__</sup> and chlorine becomes Cl<sup>__</sup> (which charge each?). Then write the name change: chlorine → ______, so the compound is ______ ______ = <strong>NaCl</strong> (not “sodium chlorine”).",
   build(stage) {
+    const scene=current;
+    requireTask('transfer','Replay the electron transfer');
     const { ctx } = makeCanvas(stage, 520, 300);
     let phase='idle', t=0;
     const NaX=145, ClX=355, cy=142;
@@ -580,7 +592,7 @@ scenes.push({
     btn.addEventListener('click',()=>{ if(phase!=='move'){ phase='move'; t=0; } });
     currentTick = (dt) => {
       ctx.clearRect(0,0,520,300);
-      if(phase==='move'){ t=Math.min(1,t+dt/1100); if(t>=1) phase='done'; }
+      if(phase==='move'){ t=Math.min(1,t+dt/1100); if(t>=1) {phase='done';finishTask('transfer',scene);} }
       const done = phase==='done';
       // Na 2,8,1 -> Na+ (its 1 valence electron is lifted out while moving/after); Cl 2,8,7 -> Cl- 2,8,8
       na.setCounts([2, 8, phase==='idle' ? 1 : 0]);
@@ -617,6 +629,9 @@ scenes.push({
   notes: "<strong>Free ions carry current</strong> — that is why molten or dissolved salt lights the bulb. Your heartbeat also runs on ions, but it needs a careful <strong>balance</strong>: far more <strong>K<sup style=\"font-size:0.68em\">+</sup> inside</strong> the heart cells than in the blood outside. That gap lets each cell fire and reset in rhythm. Inject a flood of <strong>aqueous KCl</strong> into the blood and the gap disappears — K<sup style=\"font-size:0.68em\">+</sup> piles up outside, the cells cannot reset, and the heart <strong>stops</strong>.",
   notebook: "<strong>Predict and write</strong>: if you flood the blood with aqueous KCl, what happens to the K<sup style=\"font-size:0.68em\">+</sup> balance — and to the beat? Press <strong>Inject aqueous KCl</strong> and check, then write one sentence on <strong>why</strong> the heart stops.",
   build(stage) {
+    const scene=current;
+    requireTask('dissolve','Melt / dissolve the salt');
+    requireTask('heart','Test aqueous KCl in the heart model');
     const { ctx } = makeCanvas(stage, 520, 322);
     let free=false, bright=0, injected=false, disrupt=0, tw=0;
     // conductivity beaker ions
@@ -649,6 +664,8 @@ scenes.push({
       tw += dt*0.0022;
       bright += ((free?1:0)-bright)*Math.min(1,dt/240);
       disrupt += ((injected?1:0)-disrupt)*Math.min(1,dt/380);
+      if(free && bright>.95) finishTask('dissolve',scene);
+      if(injected && disrupt>.95) finishTask('heart',scene);
       // ----- LEFT: conductivity beaker -----
       ctx.fillStyle='#eef2f7'; roundRect(ctx,40,78,196,168,12); ctx.fill(); ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=2; roundRect(ctx,40,78,196,168,12); ctx.stroke();
       if(free){ ctx.fillStyle='rgba(147,197,253,0.16)'; roundRect(ctx,44,100,188,142,9); ctx.fill(); }
@@ -726,9 +743,11 @@ scenes.push({
   notes: "<strong>Metals lose, nonmetals gain.</strong> Every atom “wants” a full outer shell (an octet = stability). A metal has only a few outer electrons, so it <strong>loses</strong> them and becomes a positive <strong>cation</strong>. A nonmetal is nearly full, so it <strong>gains</strong> electrons and becomes a negative <strong>anion</strong>. The number of electrons moved is exactly the <strong>size of the charge</strong>.",
   notebook: "<strong>Draw the transfer yourself.</strong> Draw the two atoms before, an <strong>arrow</strong> for each electron that moves, and the two ions after with their charges labeled. Then predict: chlorine has 7 outer electrons — will it <strong>lose 7</strong> or <strong>gain 1</strong>, and why is that easier?",
   build(stage) {
+    const scene=current;
     const { ctx } = makeCanvas(stage, 520, 300);
     const pairs = { 'Na + Cl':{a:'Na',sa:[2,8,1],b:'Cl',sb:[2,8,7],moved:1,ca:'+',cb:'−'},
                     'Mg + O':{a:'Mg',sa:[2,8,2],b:'O',sb:[2,6],moved:2,ca:'2+',cb:'2−'} };
+    Object.keys(pairs).forEach(k=>requireTask('transfer:'+k,'Complete the '+k+' electron transfer'));
     let key='Na + Cl', phase='idle', t=0, moved=0;
     const chips = el('div',{class:'tool-row'}, Object.keys(pairs).map(k=>el('button',{class:'chip'+(k===key?' active':''),'data-k':k,
       onclick(){ key=k; phase='idle'; t=0; moved=0; chips.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.dataset.k===k)); setStatus(); }},k)));
@@ -742,7 +761,7 @@ scenes.push({
     const A = buzzCloud(3), B = buzzCloud(3);
     currentTick = (dt) => {
       ctx.clearRect(0,0,520,300); const p=pairs[key];
-      if(phase==='move'){ t+=dt/900; if(t>=1){ moved++; t=0; if(moved>=p.moved){ phase='done'; setStatus(); } } }
+      if(phase==='move'){ t+=dt/900; if(t>=1){ moved++; t=0; if(moved>=p.moved){ phase='done'; setStatus(); finishTask('transfer:'+key,scene); } } }
       const done=phase==='done';
       const aInner=p.sa.slice(0,-1), origA=p.sa[p.sa.length-1];
       const bInner=p.sb.slice(0,-1), origB=p.sb[p.sb.length-1];
@@ -786,12 +805,14 @@ scenes.push({
     ];
     const NAME = {Li:'Lithium',Na:'Sodium',K:'Potassium',Mg:'Magnesium',Ca:'Calcium',Al:'Aluminum',N:'Nitrogen',O:'Oxygen',S:'Sulfur',F:'Fluorine',Cl:'Chlorine',Br:'Bromine',Cr:'Chromium',Mn:'Manganese',Fe:'Iron',Co:'Cobalt',Ni:'Nickel',Cu:'Copper',Zn:'Zinc'};
     const HI = new Set(Object.keys(NAME));
+    HI.forEach(sym=>requireTask('ion:'+sym,'Reveal '+NAME[sym]+"'s charge"));
     const groupCharge = g => ({1:1,2:2,13:3,15:-3,16:-2,17:-1,18:0})[g];
     const catFor = g => (g>=3&&g<=12)?'tr':(g===18)?'noble':((groupCharge(g)>0)?'cat':(groupCharge(g)<0)?'an':'');
     const chargeFor = (sym,g) => (g>=3&&g<=12) ? (sym==='Zn'?2:null) : groupCharge(g);
 
     const read = el('div',{class:'status-line pt-read'});
     function reveal(sym,g,cell){
+      finishTask('ion:'+sym);
       const cat=catFor(g), c=chargeFor(sym,g), nm=NAME[sym]||sym;
       cell.classList.add('on');
       cell.querySelector('.pt-chg').innerHTML = (cat==='tr'&&c===null)?'?':chg(c);
@@ -816,8 +837,9 @@ scenes.push({
     // polyatomics — separate chart, from the appendix reference sheet
     stage.append(el('div',{class:'eyebrow-sm',style:'text-align:center;margin-top:12px'},'Polyatomic ions — not on the table · from your reference sheet'));
     const poly = ['Ammonium','Hydroxide','Nitrate','Sulfate','Carbonate','Phosphate'];
+    poly.forEach(n=>requireTask('ion:'+n,'Reveal '+n.toLowerCase()+"'s charge"));
     stage.append(el('div',{class:'ion-grid'}, poly.map(n=>{ const P=POLY[n]; const t=el('button',{class:'tile '+(P.cat?'cat':'an'),style:'min-width:78px','aria-label':`Reveal ${n}'s ion charge`},[el('div',{class:'sym',style:'font-size:14px',html:fmt(P.f)}),el('div',{class:'charge'},''),el('div',{class:'nm'},n)]);
-      t.addEventListener('click',()=>{ t.classList.add('revealed'); t.querySelector('.charge').innerHTML=chg(P.c); }); return t; })));
+      t.addEventListener('click',()=>{ t.classList.add('revealed'); t.querySelector('.charge').innerHTML=chg(P.c); finishTask('ion:'+n); }); return t; })));
     stage.append(el('div',{class:'caption',style:'margin-top:8px'},'Tap an element to see its ion.'));
   }
 });
@@ -843,6 +865,7 @@ scenes.push({
   notebook: "For each compound, <strong>predict and write</strong> the ions + charges, drop or switch, and the formula <strong>before</strong> you run the machine. Fill a table row: name | ions + charges | drop or switch | formula.",
   build(stage) {
     const set = [['Potassium','Chloride','Potassium chloride'],['Magnesium','Chloride','Magnesium chloride'],['Aluminum','Oxide','Aluminum oxide'],['Sodium','Sulfide','Sodium sulfide']];
+    set.forEach(([c,a])=>requireTask('method:'+c+'|'+a,c+' '+a.toLowerCase()+' - reveal all four moves and the formula'));
     const host = el('div');
     const row = el('div',{class:'tool-row'}, set.map(([c,a,lbl],i)=>el('button',{class:'chip'+(i===0?' active':''),onclick(e){ row.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); e.target.classList.add('active'); methodMachine(host,c,a,{}); }},lbl)));
     stage.append(row, host);
@@ -858,6 +881,7 @@ scenes.push({
   notebook: "Iron(III) oxide: the (III) means iron is 3+, oxide is 2−. <strong>Predict and write</strong> the finished formula — FeO, Fe₂O₃, or Fe₃O₂ — before the machine runs. Then copy: Iron(II) oxide = ____, Iron(III) oxide = ____.",
   build(stage) {
     const set = [['Iron(II)','Oxide','Iron(II) oxide'],['Iron(III)','Oxide','Iron(III) oxide'],['Copper(I)','Chloride','Copper(I) chloride'],['Copper(II)','Chloride','Copper(II) chloride']];
+    set.forEach(([c,a])=>requireTask('method:'+c+'|'+a,c+' '+a.toLowerCase()+' - reveal all four moves and the formula'));
     const host = el('div');
     const row = el('div',{class:'tool-row'}, set.map(([c,a,lbl],i)=>el('button',{class:'chip'+(i===0?' active':''),onclick(e){ row.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); e.target.classList.add('active'); methodMachine(host,c,a,{}); }},lbl)));
     stage.append(row, host);
@@ -873,6 +897,7 @@ scenes.push({
   notebook: "Calcium nitrate: calcium is 2+, nitrate (NO₃⁻) is 1−. <strong>Predict and write</strong> how many nitrate UNITS you need, and whether the formula needs parentheses, before the machine runs. Then copy: Sodium nitrate = ____, Calcium nitrate = ____, Magnesium hydroxide = ____.",
   build(stage) {
     const set = [['Sodium','Nitrate','Sodium nitrate'],['Calcium','Nitrate','Calcium nitrate'],['Aluminum','Sulfate','Aluminum sulfate'],['Ammonium','Sulfate','Ammonium sulfate'],['Magnesium','Hydroxide','Magnesium hydroxide'],['Calcium','Phosphate','Calcium phosphate']];
+    set.forEach(([c,a])=>requireTask('method:'+c+'|'+a,c+' '+a.toLowerCase()+' - reveal all four moves and the formula'));
     const host = el('div');
     const row = el('div',{class:'tool-row'}, set.map(([c,a,lbl],i)=>el('button',{class:'chip'+(i===0?' active':''),onclick(e){ row.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); e.target.classList.add('active'); methodMachine(host,c,a,{}); }},lbl)));
     stage.append(row, host);
@@ -890,6 +915,9 @@ function practiceStep(stage, items) {
   // Migrate answers from the old ten-input layout without clearing existing work.
   items.forEach((it,i)=>{
     if (!state.questions[i]) state.questions[i]={answer:typeof WORK[scene+':text:'+i]==='string' ? WORK[scene+':text:'+i] : '',checked:false,revealed:false};
+    if(state.questions[i].revealed)state.questions[i].solutionSeen=true;
+    requireTask('answer:'+i,'Check the correct formula for '+it.name);
+    requireTask('solution:'+i,'Open the solution for '+it.name);
   });
   WORK[key]=state;
   const panel=el('div'); stage.append(panel);
@@ -914,11 +942,18 @@ function practiceStep(stage, items) {
     ];
     solution.append(el('ol',{},steps.map(html=>el('li',{html}))),el('span',{class:'formula',html:fmt(r.formula)}));
     const fill=el('div',{class:'pb-fill'}),progress=el('div',{class:'pb-text',role:'status'});
+    const next=el('button',{},i===items.length-1?'Finish practice':'Next question');
     function updateProgress(){
       const correct=items.filter((it,j)=>{const x=state.questions[j];return x.checked && norm(x.answer)===solve(it.cat,it.an).formula;}).length;
       fill.style.width=(correct/items.length*100)+'%';
       progress.textContent=`${correct} of ${items.length} correct · Saved on this device`;
       progress.classList.toggle('complete',correct===items.length);
+      items.forEach((it,j)=>{
+        const x=state.questions[j];
+        setTask('answer:'+j,!!x.checked && norm(x.answer)===solve(it.cat,it.an).formula,scene);
+        setTask('solution:'+j,!!x.solutionSeen,scene);
+      });
+      next.disabled=!(q.checked && norm(q.answer)===r.formula && q.solutionSeen) || (i===items.length-1 && !canAdvance());
     }
     function feedback(){
       const result=q.checked ? assessFormula(q.answer,it.cat,it.an) : {state:'',message:''};
@@ -929,13 +964,14 @@ function practiceStep(stage, items) {
     input.addEventListener('input',()=>{q.answer=input.value;q.checked=false;save();feedback();});
     input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();check.click();}});
     check.addEventListener('click',()=>{q.answer=input.value;q.checked=true;save();feedback();});
-    reveal.addEventListener('click',()=>{q.revealed=!q.revealed;solution.hidden=!q.revealed;reveal.textContent=q.revealed?'Hide solution':'Show solution';reveal.setAttribute('aria-expanded',String(q.revealed));save();});
+    reveal.addEventListener('click',()=>{q.revealed=!q.revealed;if(q.revealed)q.solutionSeen=true;solution.hidden=!q.revealed;reveal.textContent=q.revealed?'Hide solution':'Show solution';reveal.setAttribute('aria-expanded',String(q.revealed));save();updateProgress();});
     const previous=el('button',{disabled:i===0},'Previous question');
     // el() writes attributes literally; remove disabled when the control is usable.
     if(i>0) previous.removeAttribute('disabled');
-    const next=el('button',{},i===items.length-1?'Finish practice':'Next question');
     previous.addEventListener('click',()=>{state.index--;save();draw(true);});
-    next.addEventListener('click',()=>{if(state.index<items.length-1){state.index++;save();draw(true);}else setScene(scene+1,true);});
+    next.addEventListener('click',()=>{if(next.disabled)return;if(state.index<items.length-1){state.index++;save();draw(true);}else setScene(scene+1,true);});
+    const syncNext=()=>{next.disabled=!(q.checked && norm(q.answer)===r.formula && q.solutionSeen)||(i===items.length-1 && !canAdvance());};
+    stage._syncPracticeNext=syncNext;
     panel.append(el('div',{class:'practice-top'},[counter]),question,
       el('label',{class:'practice-label',for:'practiceFormula'},'Your formula'),input,
       el('div',{class:'caption',id:'formulaHint',style:'text-align:left;margin-top:8px'},'Use digits or subscripts. Element symbols are case-sensitive.'),
@@ -1107,9 +1143,40 @@ const stageEl=$('#stage'), stageLabel=$('#stageLabel'), stepHeadingEl=$('#stepHe
   stepNumEl=$('#stepNum'), stepTitleEl=$('#stepTitle'), progressFill=$('#progressFill'),
   prevBtn=$('#prevBtn'), nextBtn=$('#nextBtn'), resetBtn=$('#resetBtn');
 let current = 0;
+let requiredTasks=new Map();
+const notebookDone=$('#notebookDone'),gateStatus=$('#gateStatus');
+function gateFor(scene=current){
+  const key='gate:v1:'+scene;
+  if(!WORK[key] || typeof WORK[key]!=='object') WORK[key]={tasks:{},notebook:false,complete:false};
+  if(!WORK[key].tasks || typeof WORK[key].tasks!=='object') WORK[key].tasks={};
+  return WORK[key];
+}
+function canAdvance(){ const g=gateFor(); return !!g.notebook && [...requiredTasks.keys()].every(id=>g.tasks[id]===true); }
+function updateGate(){
+  const g=gateFor(),missing=[...requiredTasks].filter(([id])=>g.tasks[id]!==true);
+  g.complete=canAdvance();
+  notebookDone.checked=!!g.notebook;
+  nextBtn.disabled=current===scenes.length-1 || !g.complete;
+  nextBtn.setAttribute('aria-describedby','gateStatus');
+  gateStatus.textContent=missing.length?`Still to do (${missing.length}): ${missing[0][1]}.`:!g.notebook?'Finish your notes and notebook task, then confirm above.':'Step complete.';
+  if(stageEl._syncPracticeNext)stageEl._syncPracticeNext();
+}
+function requireTask(id,label){ requiredTasks.set(id,label); updateGate(); }
+function setTask(id,done,scene=current){
+  const g=gateFor(scene);
+  if(g.tasks[id]===done)return;
+  g.tasks[id]=done;
+  if(scene===current)updateGate();
+  persistWork();
+}
+function finishTask(id,scene=current){setTask(id,true,scene);}
+notebookDone.addEventListener('change',()=>{gateFor().notebook=notebookDone.checked;updateGate();persistWork();});
 const pad2 = n => n < 10 ? '0'+n : ''+n;
 function setScene(i,focus=false) {
+  if(i>current && !canAdvance())return;
   current = i; currentTick = null;
+  requiredTasks=new Map();
+  stageEl._syncPracticeNext=null;
   if (window._qUnsub) { try { window._qUnsub(); } catch(e){} window._qUnsub = null; }
   const s = scenes[i];
   stageEl.innerHTML = '';
@@ -1126,16 +1193,17 @@ function setScene(i,focus=false) {
   nextBtn.innerHTML = i === scenes.length-1 ? 'Done' : 'Next ' + ICON.right;
   s.build(stageEl);
   restoreWork(i);
+  updateGate();
   WORK.lastScene=i; persistWork();
   window.scrollTo({ top: 0, behavior: 'instant' });
   if(focus) stepHeadingEl.focus({preventScroll:true});
 }
 prevBtn.addEventListener('click', () => { if (current>0) setScene(current-1,true); });
-nextBtn.addEventListener('click', () => { if (current<scenes.length-1) setScene(current+1,true); });
+nextBtn.addEventListener('click', () => { if (current<scenes.length-1 && canAdvance()) setScene(current+1,true); });
 resetBtn.addEventListener('click', () => setScene(0,true));
 document.addEventListener('keydown', e => {
   if (e.target.matches('input,textarea,select,[contenteditable]')) return;
-  if (e.key === 'ArrowRight' && current<scenes.length-1) {e.preventDefault();setScene(current+1,true);}
+  if (e.key === 'ArrowRight' && current<scenes.length-1) {e.preventDefault();if(canAdvance())setScene(current+1,true);}
   if (e.key === 'ArrowLeft' && current>0) {e.preventDefault();setScene(current-1,true);}
 });
 
@@ -1175,7 +1243,12 @@ function recordWork(e){
 stageEl.addEventListener('input', recordWork);
 stageEl.addEventListener('change', recordWork);
 
-setScene(Number.isInteger(WORK.lastScene) ? Math.max(0,Math.min(scenes.length-1,WORK.lastScene)) : 0);
+// Resume only as far as the first unfinished step, including after an old build.
+const requestedScene=Number.isInteger(WORK.lastScene)?Math.max(0,Math.min(scenes.length-1,WORK.lastScene)):0;
+let resumeScene=0;
+while(resumeScene<requestedScene && gateFor(resumeScene).complete===true)resumeScene++;
+current=resumeScene;
+setScene(resumeScene);
 </script>
 <script type="module">
 const firebaseConfig = { apiKey:"PASTE_FIREBASE_apiKey", authDomain:"PASTE_FIREBASE_authDomain", projectId:"PASTE_FIREBASE_projectId", appId:"PASTE_FIREBASE_appId" };
