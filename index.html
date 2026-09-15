@@ -175,6 +175,68 @@
     .progress-track { padding: 0 16px; }
     .vocab-grid { grid-template-columns: 1fr; }
   }
+  /* A compact Spark header, with the chemistry workspace kept in view. */
+  :root { --indigo-2:#818CF8; --indigo-soft:rgba(99,102,241,.09); --indigo-line:rgba(99,102,241,.30); }
+  header { max-width:none; padding:22px max(24px,calc((100vw - 1276px)/2)) 46px; background:linear-gradient(145deg,#4f46e5,#6366f1); position:relative; }
+  header::before { content:''; position:absolute; inset:0; background:radial-gradient(circle,rgba(255,255,255,.09) 1px,transparent 2px); background-size:30px 30px; pointer-events:none; }
+  header .titles { position:relative; }
+  header .titles .eyebrow { color:#fff; font-size:11px; }
+  header .titles h1 { color:#fff; font-size:clamp(24px,3vw,32px); letter-spacing:-.5px; }
+  .progress-track { position:relative; margin-top:-40px; padding:12px 32px 0; }
+  .step-line { color:#fff; margin-bottom:12px; }
+  .step-line .ttl { display:none; }
+  .step-line .num,.step-line .count { color:#fff; font-size:12px; font-variant-numeric:tabular-nums; }
+  .progress-track .fill { background:linear-gradient(90deg,var(--accentBlue),var(--indigo-2)); }
+  main { padding-top:16px; }
+  .workspace { gap:24px; grid-template-columns:minmax(0,1.55fr) minmax(320px,.92fr); }
+  .stage { padding:20px; min-height:470px; }
+  .notes-card { font-size:16px; line-height:1.55; padding:20px; }
+  .notes-card .nc-tag,.stage-label { font-size:11px; }
+  .step-heading { font-size:21px; line-height:1.3; margin:0 0 10px; }
+  .notebook-prompt { font-size:16px; padding:16px; }
+  .notebook-prompt .np-tag { font-size:10px; }
+  button { font-size:16px; min-height:44px; padding:10px 16px; }
+  button:focus-visible,[role=button]:focus-visible { outline:3px solid var(--accentBlueHover); outline-offset:3px; }
+  .caption,.eyebrow-sm,.pb-text { color:var(--textSecondary); font-size:12px; }
+  .tile .nm { font-size:11px; color:var(--textSecondary); }
+  button.pt-cell { min-height:0; font-size:13px; border-radius:5px; }
+  .pt-read { font-size:14px; }
+  .chip { font-size:14px; min-height:44px; }
+  .practice-top,.practice-nav { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .practice-counter { font:700 12px var(--font-mono); color:var(--textSecondary); font-variant-numeric:tabular-nums; }
+  .practice-question { font:700 clamp(24px,3vw,32px) var(--font-serif); line-height:1.2; margin:16px 0; color:var(--textWarm); }
+  .practice-label { display:block; font-size:14px; font-weight:600; margin-bottom:8px; }
+  .practice-input { width:100%; max-width:360px; font:500 26px var(--font-mono); padding:14px 16px; border:1px solid var(--borderColor); border-radius:12px; color:var(--textPrimary); background:#fff; }
+  .practice-input:focus { outline:3px solid var(--indigo-line); border-color:var(--accentBlue); }
+  .practice-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+  .practice-feedback { min-height:42px; font-size:15px; line-height:1.4; padding-top:10px; }
+  .practice-feedback.ok { color:#166534; }
+  .practice-feedback.no { color:#b91c1c; }
+  .practice-solution { margin:10px 0; font-size:15px; line-height:1.5; white-space:normal; }
+  .practice-solution ol { margin:0; padding-left:20px; }
+  .practice-solution li+li { margin-top:5px; }
+  .practice-solution .formula { display:block; font-size:26px; margin-top:8px; }
+  .practice-nav { border-top:1px solid var(--borderSubtle); padding-top:12px; margin-top:12px; }
+  .pb-text { text-transform:none; letter-spacing:0; font-variant-numeric:tabular-nums; }
+  [hidden] { display:none !important; }
+  @media (max-width:980px) {
+    .workspace { grid-template-columns:1fr; }
+    .stage { min-height:420px; }
+    header { padding:20px 16px 46px; }
+    .progress-track { padding-left:16px; padding-right:16px; }
+  }
+  @media (max-width:480px) {
+    main { padding:12px; }
+    .stage { padding:16px; }
+    .notes-card { padding:16px; }
+    nav { flex-wrap:wrap; }
+    .btn-group { margin-left:auto; }
+    .practice-nav { flex-wrap:wrap; }
+    .practice-nav button { padding:10px 12px; }
+  }
+  @media (prefers-reduced-motion:reduce) {
+    *,*::before,*::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
+  }
 </style>
 </head>
 <body>
@@ -200,7 +262,7 @@
     <div class="side">
       <div class="notes-card">
         <div class="nc-tag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Copy Into Your Notes</div>
-        <div class="step-heading" id="stepHeading"></div>
+        <h2 class="step-heading" id="stepHeading" tabindex="-1"></h2>
         <p id="notes"></p>
       </div>
       <div class="notebook-prompt">
@@ -208,7 +270,7 @@
         <div id="notebookText"></div>
       </div>
       <nav>
-        <button id="resetBtn">Start Over</button>
+        <button id="resetBtn" title="Return to the first step without clearing your work">Back to start</button>
         <div class="btn-group">
           <button id="prevBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg> Back</button>
           <button id="nextBtn" class="primary">Next <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
@@ -235,7 +297,7 @@ function el(tag, attrs={}, kids=[]) {
   return n;
 }
 function makeCanvas(stage, w, h) {
-  const c = el('canvas'); c.width = w; c.height = h; c.style.maxWidth = w + 'px'; c.style.margin = '0 auto';
+  const c = el('canvas',{'role':'img','aria-label':'Animated chemistry model. The accompanying notes explain the concept.'}); c.width = w; c.height = h; c.style.maxWidth = w + 'px'; c.style.margin = '0 auto';
   stage.append(c); return { c, ctx: c.getContext('2d') };
 }
 function roundRect(ctx, x, y, w, h, r) {
@@ -311,7 +373,18 @@ function subPhrase(io, n) {
   if (io.poly) return `the ${n} goes outside parentheses: (${io.token})${n}`;
   return `the ${n} becomes ${io.token}'s subscript`;
 }
-const norm = s => (s||'').replace(/\s+/g,'').replace(/−/g,'-');
+const norm = s => (s||'').replace(/[₀-₉]/g, d => String('₀₁₂₃₄₅₆₇₈₉'.indexOf(d))).replace(/\s+/g,'').replace(/−/g,'-');
+
+function assessFormula(value, catName, anName) {
+  const v=norm(value), r=solve(catName,anName);
+  if (!v) return {state:'no',message:'Enter a formula first.'};
+  if (v===r.formula) return {state:'ok',message:'Correct. The ion ratio is in lowest terms.'};
+  if (v.toLowerCase()===r.formula.toLowerCase()) return {state:'no',message:'Check capitalization: element symbols are case-sensitive.'};
+  if (r.g>1 && v===r.raw) return {state:'no',message:'Reduce the ion ratio to the smallest whole numbers.'};
+  if (r.a===r.b && r.a>1 && v===unitStr(r.cat,r.a)+unitStr(r.an,r.b)) return {state:'no',message:'Equal charges need one of each ion. Omit subscripts of 1.'};
+  if ((r.cat.poly && r.nc>1)||(r.an.poly && r.na>1)) return {state:'no',message:'Balance the charges and keep repeated polyatomic ions inside parentheses.'};
+  return {state:'no',message:'Check each charge, then find the smallest ratio with a total charge of zero.'};
+}
 
 // build the copy-down worked solution for any compound
 function workedFor(catName, anName) {
@@ -359,6 +432,7 @@ function drawBulb(ctx, x, y, b) {
 }
 // Bohr atom: nucleus symbol + shells of electrons
 const BOHR_R = [0, 22, 40, 58];
+const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
 // Buzzing electron cloud (same feel as the Atomic Structure app): electrons wander
 // on a random walk with radial breathing and jitter, leaving a fading trail — NOT fixed orbits.
 function buzzCloud(nShells) {
@@ -374,6 +448,7 @@ function buzzCloud(nShells) {
       }
     },
     update(dt) {
+      if(reducedMotion.matches) return;
       const f = dt * 0.06;
       for (let i = 0; i < shells.length; i++) {
         const dir = (i % 2) ? -1 : 1, buzz = 0.5 + i * 0.75;
@@ -733,7 +808,7 @@ scenes.push({
     }
     PT.forEach(([sym,g,p])=>{
       const cat=catFor(g), hi=HI.has(sym);
-      const cell = el('div',{class:`pt-cell ${cat}${hi?' hi':''}`, style:`grid-column:${g};grid-row:${p+1}`},[ el('div',{},sym), el('div',{class:'pt-chg'},'') ]);
+      const cell = el(hi?'button':'div',{class:`pt-cell ${cat}${hi?' hi':''}`, style:`grid-column:${g};grid-row:${p+1};padding:0`,...(hi?{'aria-label':`Reveal ${NAME[sym]}'s ion charge`}:{})},[ el('div',{},sym), el('div',{class:'pt-chg'},'') ]);
       if (hi) cell.addEventListener('click',()=>reveal(sym,g,cell));
       grid.append(cell);
     });
@@ -741,7 +816,7 @@ scenes.push({
     // polyatomics — separate chart, from the appendix reference sheet
     stage.append(el('div',{class:'eyebrow-sm',style:'text-align:center;margin-top:12px'},'Polyatomic ions — not on the table · from your reference sheet'));
     const poly = ['Ammonium','Hydroxide','Nitrate','Sulfate','Carbonate','Phosphate'];
-    stage.append(el('div',{class:'ion-grid'}, poly.map(n=>{ const P=POLY[n]; const t=el('div',{class:'tile '+(P.cat?'cat':'an'),style:'min-width:78px'},[el('div',{class:'sym',style:'font-size:14px',html:fmt(P.f)}),el('div',{class:'charge'},''),el('div',{class:'nm'},n)]);
+    stage.append(el('div',{class:'ion-grid'}, poly.map(n=>{ const P=POLY[n]; const t=el('button',{class:'tile '+(P.cat?'cat':'an'),style:'min-width:78px','aria-label':`Reveal ${n}'s ion charge`},[el('div',{class:'sym',style:'font-size:14px',html:fmt(P.f)}),el('div',{class:'charge'},''),el('div',{class:'nm'},n)]);
       t.addEventListener('click',()=>{ t.classList.add('revealed'); t.querySelector('.charge').innerHTML=chg(P.c); }); return t; })));
     stage.append(el('div',{class:'caption',style:'margin-top:8px'},'Tap an element to see its ion.'));
   }
@@ -806,38 +881,69 @@ scenes.push({
 });
 
 // ---- Practice runner (shared) ----
-function practiceStep(stage, items, intro) {
-  if (intro) stage.append(el('div',{class:'caption',style:'margin-bottom:4px'}, intro));
-  let done = 0;
-  const bar = el('div',{class:'pb-bar'},[el('div',{class:'pb-fill'})]);
-  const text = el('div',{class:'pb-text'}, `0 of ${items.length} checked`);
-  items.forEach((it,i) => {
-    const answer = solve(it.cat, it.an).formula;
-    const wrongTrap = (()=>{ const r=solve(it.cat,it.an); return (r.a===r.b && r.a>1) ? `${r.cat.poly?`(${r.cat.token})`:r.cat.token}${r.a}${r.an.poly?`(${r.an.token})`:r.an.token}${r.b}` : null; })();
-    const pill = el('span',{class:'diff-pill '+(it.d==='Simple'?'diff-simple':'diff-challenge')}, it.d);
-    const input = el('input',{type:'text',placeholder:'formula',autocapitalize:'off',autocomplete:'off',spellcheck:'false'});
-    const checkBtn = el('button',{class:'reveal-btn'},'Check');
-    const revealBtn = el('button',{},'Show the 4 moves');
-    const msg = el('div',{class:'chk-msg'});
-    const rev = el('div',{class:'reveal-content',hidden:'',html: workedFor(it.cat,it.an)});
-    let counted=false;
-    function mark(){ if(!counted){ counted=true; done++; bar.querySelector('.pb-fill').style.width=(done/items.length*100)+'%'; text.textContent=done===items.length?`All ${items.length} checked`:`${done} of ${items.length} checked`; text.classList.toggle('complete',done===items.length); } }
-    checkBtn.addEventListener('click',()=>{
-      const v = norm(input.value);
-      if(!v){ return; }
-      if(v === norm(answer)){ input.classList.remove('no'); input.classList.add('ok'); msg.className='chk-msg ok'; msg.textContent='Correct.'; mark(); }
-      else if(wrongTrap && v===norm(wrongTrap)){ input.classList.add('no'); msg.className='chk-msg no'; msg.textContent='Same numbers drop — do not switch them.'; }
-      else { input.classList.add('no'); msg.className='chk-msg no'; msg.textContent='Not yet — check the charges, the switch, and parentheses.'; }
-    });
-    input.addEventListener('keydown',e=>{ if(e.key==='Enter') checkBtn.click(); });
-    revealBtn.addEventListener('click',()=>{ const h=rev.hasAttribute('hidden'); rev.toggleAttribute('hidden',!h); revealBtn.textContent=h?'Hide the 4 moves':'Show the 4 moves'; if(h) mark(); });
-    stage.append(el('div',{class:'q-card'},[
-      el('div',{class:'q-head'},[ el('div',{},[el('span',{class:'q-num'},(i+1)+'.'), el('span',{class:'q-name'}, it.name)]), pill ]),
-      el('div',{class:'ans-row'},[input, checkBtn, revealBtn, msg]),
-      rev
-    ]));
+function practiceStep(stage, items) {
+  const scene=current, key='practice:'+scene;
+  const saved=WORK[key];
+  const state=saved && typeof saved==='object' ? saved : {index:0,questions:{}};
+  state.questions=state.questions && typeof state.questions==='object' ? state.questions : {};
+  state.index=Number.isInteger(state.index) ? Math.max(0,Math.min(items.length-1,state.index)) : 0;
+  // Migrate answers from the old ten-input layout without clearing existing work.
+  items.forEach((it,i)=>{
+    if (!state.questions[i]) state.questions[i]={answer:typeof WORK[scene+':text:'+i]==='string' ? WORK[scene+':text:'+i] : '',checked:false,revealed:false};
   });
-  stage.append(el('div',{class:'pb-progress'},[bar,text]));
+  WORK[key]=state;
+  const panel=el('div'); stage.append(panel);
+  function save(){ persistWork(); }
+  function draw(focus=false){
+    panel.innerHTML='';
+    const i=state.index,it=items[i],q=state.questions[i],r=solve(it.cat,it.an);
+    const counter=el('div',{class:'practice-counter'},`Question ${i+1} of ${items.length}`);
+    const question=el('h3',{class:'practice-question',id:'practiceQuestion'},it.name);
+    const input=el('input',{id:'practiceFormula',class:'practice-input',type:'text',placeholder:'e.g. NaCl',autocapitalize:'off',autocomplete:'off',spellcheck:'false','data-managed':'true','aria-describedby':'formulaHint practiceFeedback'});
+    input.value=q.answer || '';
+    const msg=el('div',{class:'practice-feedback',id:'practiceFeedback',role:'status','aria-live':'polite'});
+    const check=el('button',{class:'primary'},'Check formula');
+    const reveal=el('button',{'aria-controls':'practiceSolution','aria-expanded':q.revealed?'true':'false'},q.revealed?'Hide solution':'Show solution');
+    const solution=el('div',{class:'reveal-content practice-solution',id:'practiceSolution'});
+    solution.hidden=!q.revealed;
+    const steps=[
+      `<span class="ion-chip cat">${fmt(r.cat.token)}<sup>${chg(r.cat.charge)}</sup></span> + <span class="ion-chip an">${fmt(r.an.token)}<sup>${chg(r.an.charge)}</sup></span>`,
+      `Use the charge magnitudes: <strong>${r.a}</strong> and <strong>${r.b}</strong>.`,
+      r.a===r.b ? 'Equal magnitudes: use one of each ion.' : `Switch the numbers: ${fmt(r.raw)}.`,
+      r.g>1 && r.a!==r.b ? `Divide the ion counts by ${r.g}: ${fmt(r.formula)}.` : 'The ion ratio is already in lowest terms.'
+    ];
+    solution.append(el('ol',{},steps.map(html=>el('li',{html}))),el('span',{class:'formula',html:fmt(r.formula)}));
+    const fill=el('div',{class:'pb-fill'}),progress=el('div',{class:'pb-text',role:'status'});
+    function updateProgress(){
+      const correct=items.filter((it,j)=>{const x=state.questions[j];return x.checked && norm(x.answer)===solve(it.cat,it.an).formula;}).length;
+      fill.style.width=(correct/items.length*100)+'%';
+      progress.textContent=`${correct} of ${items.length} correct · Saved on this device`;
+      progress.classList.toggle('complete',correct===items.length);
+    }
+    function feedback(){
+      const result=q.checked ? assessFormula(q.answer,it.cat,it.an) : {state:'',message:''};
+      msg.className='practice-feedback '+result.state; msg.textContent=result.message;
+      input.setAttribute('aria-invalid',result.state==='no'?'true':'false');
+      updateProgress();
+    }
+    input.addEventListener('input',()=>{q.answer=input.value;q.checked=false;save();feedback();});
+    input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();check.click();}});
+    check.addEventListener('click',()=>{q.answer=input.value;q.checked=true;save();feedback();});
+    reveal.addEventListener('click',()=>{q.revealed=!q.revealed;solution.hidden=!q.revealed;reveal.textContent=q.revealed?'Hide solution':'Show solution';reveal.setAttribute('aria-expanded',String(q.revealed));save();});
+    const previous=el('button',{disabled:i===0},'Previous question');
+    // el() writes attributes literally; remove disabled when the control is usable.
+    if(i>0) previous.removeAttribute('disabled');
+    const next=el('button',{},i===items.length-1?'Finish practice':'Next question');
+    previous.addEventListener('click',()=>{state.index--;save();draw(true);});
+    next.addEventListener('click',()=>{if(state.index<items.length-1){state.index++;save();draw(true);}else setScene(scene+1,true);});
+    panel.append(el('div',{class:'practice-top'},[counter]),question,
+      el('label',{class:'practice-label',for:'practiceFormula'},'Your formula'),input,
+      el('div',{class:'caption',id:'formulaHint',style:'text-align:left;margin-top:8px'},'Use digits or subscripts. Element symbols are case-sensitive.'),
+      el('div',{class:'practice-actions'},[check,reveal]),msg,solution,
+      el('div',{class:'practice-nav'},[previous,next]),el('div',{class:'pb-progress'},[el('div',{class:'pb-bar'},[fill]),progress]));
+    feedback(); if(focus) input.focus({preventScroll:true});
+  }
+  draw();
 }
 
 // ---- Step 10: Practice A (binary + transition) ----
@@ -894,20 +1000,24 @@ scenes.push({
     const APP = 'Ionic Formulas';
     const TEACHER_CODE = 'sparky2026';
     const inS = 'font-family:var(--font-sans);font-size:14px;padding:9px 12px;border:1px solid var(--borderColor);border-radius:9px;background:#fff;color:var(--textPrimary)';
-    const name = el('input',{type:'text',placeholder:'Your name',style:inS+';flex:2;min-width:0'});
-    const klass = el('input',{type:'text',placeholder:'Class / period',style:inS+';flex:1;min-width:0'});
+    const name = el('input',{type:'text',placeholder:'Your name',style:inS+';flex:2;min-width:0','aria-label':'Your name'});
+    const klass = el('input',{type:'text',placeholder:'Class / period',style:inS+';flex:1;min-width:0','aria-label':'Class or period'});
+    const modeNote=el('div',{class:'caption',role:'status',style:'text-align:left'},'Questions are saved on this device only, not sent to your teacher.');
+    stage.append(modeNote);
     stage.append(el('div',{style:'display:flex;gap:8px;margin-top:4px'},[name,klass]));
     const inputs = [];
     const wrap = el('div',{style:'display:flex;flex-direction:column;gap:8px;margin-top:8px'});
-    for (let i=0;i<5;i++){ const inp = el('input',{type:'text',placeholder:'I wonder...',style:inS+';flex:1;min-width:0'}); inputs.push(inp);
+    for (let i=0;i<5;i++){ const inp = el('input',{type:'text',placeholder:'I wonder...',style:inS+';flex:1;min-width:0','aria-label':`Question ${i+1}`}); inputs.push(inp);
       wrap.append(el('div',{style:'display:flex;align-items:center;gap:10px'},[ el('div',{class:'q-num',style:'min-width:20px'},(i+1)+'.'), inp ])); }
     stage.append(wrap);
-    const btn = el('button',{class:'primary',style:'margin-top:2px'},'Submit my questions');
-    const msg = el('div',{class:'status-line',style:'text-align:left;min-height:0'});
+    const btn = el('button',{class:'primary',style:'margin-top:2px'},'Save my questions');
+    const msg = el('div',{class:'status-line',style:'text-align:left;min-height:0',role:'status','aria-live':'polite'});
     stage.append(el('div',{style:'display:flex;align-items:center;gap:12px;margin-top:2px'},[btn, msg]));
     const feed = el('div',{style:'flex:1 1 240px;min-width:0;max-height:210px;overflow:auto;border:1px solid var(--borderColor);border-radius:10px;background:#fff'});
     const cloud = el('div',{style:'flex:1 1 240px;min-width:0;max-height:210px;overflow:auto;border:1px solid var(--borderColor);border-radius:10px;background:var(--bgMain);padding:10px;text-align:center;align-content:center'});
-    stage.append(el('div',{class:'eyebrow-sm',style:'margin-top:14px'},'What the class is wondering'));
+    const feedTitle=el('div',{class:'eyebrow-sm',style:'margin-top:14px'},'Saved questions on this device');
+    stage.append(feedTitle);
+    cloud.hidden=true;
     stage.append(el('div',{style:'display:flex;flex-wrap:wrap;gap:12px;margin-top:6px'},[feed, cloud]));
     const tParam = new URLSearchParams(location.search).get('teacher');
     if (tParam === '1') { try { localStorage.setItem('classq_teacher','1'); } catch(e){} }
@@ -932,7 +1042,7 @@ scenes.push({
     function paint(items){
       feed.innerHTML='';
       const qlist=[]; (items||[]).forEach(it => (it.questions||[]).forEach(q => { if(q) qlist.push({q, who:(it.name||'Anon'), kl:(it.klass||'')}); }));
-      if(!qlist.length){ feed.innerHTML='<div class="caption" style="padding:16px">Be the first: submit a question.</div>'; }
+      if(!qlist.length){ feed.innerHTML='<div class="caption" style="padding:16px">No saved questions yet.</div>'; }
       else qlist.forEach(r => feed.append(el('div',{style:'padding:8px 11px;border-bottom:1px solid var(--borderSubtle)'},[
         el('div',{style:'font-size:13.5px;color:var(--textPrimary);line-height:1.4'}, r.q),
         el('div',{style:'font-family:var(--font-mono);font-size:10px;color:var(--textWarmMuted);margin-top:2px'}, r.who + (r.kl?(' · '+r.kl):'')) ])));
@@ -944,7 +1054,17 @@ scenes.push({
         words.forEach(([w,n],i)=> cloud.append(el('span',{style:`display:inline-block;margin:3px 7px;font-family:var(--font-sans);font-weight:700;line-height:1.05;font-size:${13+Math.round((n/max)*22)}px;color:${pal[i%pal.length]};opacity:${(0.55+0.45*(n/max)).toFixed(2)}`}, w))); }
     }
     paint([]);
-    function wireLive(){ if(window._qUnsub){ try{window._qUnsub();}catch(e){} window._qUnsub=null; } if(window.ClassQ){ window._qUnsub = window.ClassQ.subscribe(APP, paint); } }
+    function wireLive(){
+      if(window._qUnsub){ try{window._qUnsub();}catch(e){} window._qUnsub=null; }
+      if(window.ClassQ){
+        const live=window.ClassQ.mode==='live';
+        modeNote.textContent=live?'Questions are shared with your class.':'Questions are saved on this device only, not sent to your teacher.';
+        btn.textContent=live?'Submit my questions':'Save my questions';
+        feedTitle.textContent=live?'Class questions':'Saved questions on this device';
+        cloud.hidden=!live;
+        window._qUnsub = window.ClassQ.subscribe(APP, paint);
+      }
+    }
     if(window.ClassQ) wireLive(); else window.addEventListener('classq-ready', wireLive, {once:true});
     const BAD=/\b(fuck|shit|bitch|damn|crap|ass|dick|piss)\b/i;
     btn.addEventListener('click', async () => {
@@ -952,13 +1072,14 @@ scenes.push({
       if(!name.value.trim() || !klass.value.trim()){ msg.textContent='Add your name and class first.'; msg.classList.remove('complete'); return; }
       if(!qsv.length){ msg.textContent='Type at least one question first.'; msg.classList.remove('complete'); return; }
       if(BAD.test(name.value) || BAD.test(klass.value) || qsv.some(q=>BAD.test(q))){ msg.textContent='Keep it school-appropriate, please.'; msg.classList.remove('complete'); return; }
-      btn.disabled=true; btn.textContent='Submitting...'; msg.textContent='';
+      btn.disabled=true; btn.textContent='Saving...'; msg.textContent='';
       try {
         if(!window.ClassQ) throw new Error('offline');
         await window.ClassQ.submit({ app:APP, name:name.value.trim(), klass:klass.value.trim(), questions:qsv });
-        btn.textContent='Submitted'; msg.textContent = (window.ClassQ.mode==='live') ? 'Thanks! Added below for the class.' : 'Added below (demo mode on this device).'; msg.classList.add('complete');
-        inputs.forEach(i=>i.value='');
-      } catch(err){ btn.disabled=false; btn.textContent='Submit my questions'; msg.textContent='Could not submit, try again.'; msg.classList.remove('complete'); }
+        btn.textContent=window.ClassQ.mode==='live'?'Submit my questions':'Save my questions'; msg.textContent = (window.ClassQ.mode==='live') ? 'Shared with your class.' : 'Saved on this device. Share your questions with your teacher in class.'; msg.classList.add('complete');
+        inputs.forEach(i=>{i.value='';i.dispatchEvent(new Event('input',{bubbles:true}));});
+        btn.disabled=false;
+      } catch(err){ btn.disabled=false; btn.textContent='Try again'; msg.textContent='Could not save. Try again.'; msg.classList.remove('complete'); }
     });
   }
 });
@@ -966,38 +1087,56 @@ scenes.push({
 // =====================================================
 //  Nav controller
 // =====================================================
+// Keep the original lesson sequence; present only the essential copy per step.
+const CLEAN_COPY=[
+  ['From atoms to ions','<strong>Write a formula from a compound name.</strong> Metals keep their names; monatomic nonmetals end in <strong>-ide</strong>. Sodium chloride is <strong>NaCl</strong>: one sodium ion for each chloride ion.','<strong>Predict the charges</strong> on Na and Cl, then replay the transfer and write the compound name.'],
+  ['Ions and the heart','<strong>Mobile ions carry current.</strong> Dissolved or molten salts conduct. Heart cells also depend on ion gradients; excess potassium outside the cells disrupts their electrical rhythm.','<strong>Predict</strong> how excess K⁺ outside heart cells changes their rhythm, then test the model.'],
+  ['What ionic means','<strong>An ionic compound contains cations and anions.</strong> A cation is positive; an anion is negative. Their electrostatic attraction is the <strong>ionic bond</strong>. Metals and nonmetals are common partners, but polyatomic ions can participate too.','Define <strong>ion, cation, anion, and ionic bond</strong> in your own words.'],
+  ['Who loses, who gains','<strong>Metals commonly lose electrons; nonmetals commonly gain them.</strong> Losing electrons makes a cation; gaining them makes an anion. For these monatomic ions, the number transferred gives the charge magnitude.','Draw each electron transferred and label the resulting charges. Predict whether chlorine <strong>loses seven or gains one</strong>.'],
+  ['Find the charges','<strong>Common monatomic ions:</strong> Group 1 is 1+, Group 2 is 2+, and Al is 3+. Groups 15, 16, and 17 are 3−, 2−, and 1−. Use the name or reference sheet for variable-charge metals and polyatomic ions.','Tap iron and oxygen. Explain why <strong>iron needs a Roman numeral</strong> but oxide does not.'],
+  ['The four moves','<strong>1.</strong> Write the ions and charges. <strong>2.</strong> Use the magnitudes, not the signs. <strong>3.</strong> Equal? Use one of each. Different? Switch. <strong>4.</strong> Reduce the ion ratio.','Predict <strong>CaO or Ca₂O₂</strong>, then run the machine. Try tin(IV) oxide to test reduction.'],
+  ['Binary compounds','<strong>Total charge must be zero.</strong> Use the smallest whole-number ratio: MgCl₂ is 1:2; Al₂O₃ is 2:3. Equal charge magnitudes give a 1:1 ratio.','Write the ions, charges, and formula <strong>before</strong> running each example.'],
+  ['Roman numerals','<strong>The Roman numeral gives the metal ion charge.</strong> Iron(II) is Fe²⁺; iron(III) is Fe³⁺. Balance that charge with the anion.','Predict <strong>iron(III) oxide</strong>, then compare it with iron(II) oxide.'],
+  ['Keep the group together','<strong>A polyatomic ion is one unit.</strong> Keep its internal subscripts unchanged. Add parentheses only when more than one unit is needed: Ca(NO₃)₂, but NaNO₃.','Predict how many <strong>nitrate units</strong> calcium needs, then check the formula.'],
+  ['Binary practice','<strong>Balance, then reduce.</strong> These compounds use monatomic ions. Equal charge magnitudes give one of each ion.','Write each formula <strong>before checking</strong>. Use the solution to explain any correction.'],
+  ['Polyatomic practice','<strong>Keep each polyatomic ion whole.</strong> Balance its charge with the metal or ammonium ion, then use parentheses for repeated units.','Write each formula <strong>before checking</strong>. Explain when parentheses are needed.'],
+  ['What are you wondering?','<strong>Recap:</strong> identify the charges, balance to zero, reduce the ratio, and keep polyatomic ions intact. Name one thing you can do and one question you still have.','Write your questions in your notebook. You can also <strong>save them on this device</strong>.']
+];
 const stageEl=$('#stage'), stageLabel=$('#stageLabel'), stepHeadingEl=$('#stepHeading'),
   notesEl=$('#notes'), notebookTextEl=$('#notebookText'), stepIndicator=$('#stepIndicator'),
   stepNumEl=$('#stepNum'), stepTitleEl=$('#stepTitle'), progressFill=$('#progressFill'),
   prevBtn=$('#prevBtn'), nextBtn=$('#nextBtn'), resetBtn=$('#resetBtn');
 let current = 0;
 const pad2 = n => n < 10 ? '0'+n : ''+n;
-function setScene(i) {
+function setScene(i,focus=false) {
   current = i; currentTick = null;
   if (window._qUnsub) { try { window._qUnsub(); } catch(e){} window._qUnsub = null; }
   const s = scenes[i];
   stageEl.innerHTML = '';
   const shortTitle = s.heading.replace(/^Step \d+:\s*/, '');
   stageLabel.textContent = s.seeLabel || 'What you see';
-  stepHeadingEl.textContent = 'Step ' + (i+1) + ': ' + shortTitle;
+  const copy=CLEAN_COPY[i];
+  stepHeadingEl.textContent = copy?copy[0]:shortTitle.replace(/\s*[—-]\s*/g,' - ');
   stepNumEl.textContent = 'Step ' + pad2(i+1);
   stepTitleEl.textContent = shortTitle;
-  notesEl.innerHTML = s.notes; notebookTextEl.innerHTML = s.notebook;
+  notesEl.innerHTML = copy?copy[1]:s.notes; notebookTextEl.innerHTML = copy?copy[2]:s.notebook;
   stepIndicator.textContent = `${pad2(i+1)} / ${pad2(scenes.length)}`;
   progressFill.style.width = ((i+1)/scenes.length*100) + '%';
   prevBtn.disabled = i === 0; nextBtn.disabled = i === scenes.length-1;
   nextBtn.innerHTML = i === scenes.length-1 ? 'Done' : 'Next ' + ICON.right;
   s.build(stageEl);
   restoreWork(i);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  WORK.lastScene=i; persistWork();
+  window.scrollTo({ top: 0, behavior: 'instant' });
+  if(focus) stepHeadingEl.focus({preventScroll:true});
 }
-prevBtn.addEventListener('click', () => { if (current>0) setScene(current-1); });
-nextBtn.addEventListener('click', () => { if (current<scenes.length-1) setScene(current+1); });
-resetBtn.addEventListener('click', () => setScene(0));
+prevBtn.addEventListener('click', () => { if (current>0) setScene(current-1,true); });
+nextBtn.addEventListener('click', () => { if (current<scenes.length-1) setScene(current+1,true); });
+resetBtn.addEventListener('click', () => setScene(0,true));
 document.addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT') return;
-  if (e.key === 'ArrowRight' && current<scenes.length-1) setScene(current+1);
-  if (e.key === 'ArrowLeft' && current>0) setScene(current-1);
+  if (e.target.matches('input,textarea,select,[contenteditable]')) return;
+  if (e.key === 'ArrowRight' && current<scenes.length-1) {e.preventDefault();setScene(current+1,true);}
+  if (e.key === 'ArrowLeft' && current>0) {e.preventDefault();setScene(current-1,true);}
 });
 
 // ===== Student work persistence =====
@@ -1006,10 +1145,9 @@ document.addEventListener('keydown', e => {
 // localStorage so a page reload keeps student work too.
 const WORK_KEY = 'ionic-formulas-student-work';
 let WORK = {};
-try { WORK = JSON.parse(localStorage.getItem(WORK_KEY)) || {}; } catch(e) { WORK = {}; }
-let workTimer = null;
-function persistWork(){ clearTimeout(workTimer); workTimer = setTimeout(() => { try { localStorage.setItem(WORK_KEY, JSON.stringify(WORK)); } catch(e){} }, 250); }
-function workFields(){ return Array.from(stageEl.querySelectorAll('input, textarea, select')).filter(f => f.type !== 'password' && f.type !== 'file'); }
+try { const saved=JSON.parse(localStorage.getItem(WORK_KEY)); WORK=saved && typeof saved==='object' && !Array.isArray(saved)?saved:{}; } catch(e) { WORK = {}; }
+function persistWork(){ try { localStorage.setItem(WORK_KEY, JSON.stringify(WORK)); } catch(e){ const p=stageEl.querySelector('.pb-text');if(p)p.textContent='Storage unavailable. Keep your answers in your notebook.'; } }
+function workFields(){ return Array.from(stageEl.querySelectorAll('input, textarea, select')).filter(f => f.type !== 'password' && f.type !== 'file' && !f.hasAttribute('data-managed')); }
 function workKey(scene, f, idx){ return scene + ':' + (f.type || f.tagName.toLowerCase()) + ':' + idx; }
 function restoreWork(scene){
   workFields().forEach((f, idx) => {
@@ -1037,7 +1175,7 @@ function recordWork(e){
 stageEl.addEventListener('input', recordWork);
 stageEl.addEventListener('change', recordWork);
 
-setScene(0);
+setScene(Number.isInteger(WORK.lastScene) ? Math.max(0,Math.min(scenes.length-1,WORK.lastScene)) : 0);
 </script>
 <script type="module">
 const firebaseConfig = { apiKey:"PASTE_FIREBASE_apiKey", authDomain:"PASTE_FIREBASE_authDomain", projectId:"PASTE_FIREBASE_projectId", appId:"PASTE_FIREBASE_appId" };
