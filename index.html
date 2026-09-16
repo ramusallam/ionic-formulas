@@ -1035,30 +1035,20 @@ scenes.push({
   seeLabel: 'Your questions',
   heading: 'Step 12: What Are You Wondering?',
   notes: "<strong>You can now write any ionic formula.</strong> You read the charges (group position or Roman numeral), <strong>dropped or switched</strong> the numbers, reduced when needed, kept polyatomic ions whole, and added parentheses only when the count passed 1. Next cycle we run it in reverse, <strong>formula back to name</strong>, and watch these ions <strong>react</strong>. Post what is still fuzzy so we hit it first.",
-  notebook: "Write <strong>5 questions</strong> in your notebook, then type them here and hit <strong>Submit</strong>. Finish two lines: “One thing I can now DO: ____” and “My question for the class: ____.”",
+  notebook: "Write the questions you still have in your notebook, then add them here.",
   build(stage) {
     const APP = 'Ionic Formulas';
     const TEACHER_CODE = 'sparky2026';
-    const inS = 'font-family:var(--font-sans);font-size:14px;padding:9px 12px;border:1px solid var(--borderColor);border-radius:9px;background:#fff;color:var(--textPrimary)';
-    const name = el('input',{type:'text',placeholder:'Your name',style:inS+';flex:2;min-width:0','aria-label':'Your name'});
-    const klass = el('input',{type:'text',placeholder:'Class / period',style:inS+';flex:1;min-width:0','aria-label':'Class or period'});
-    const modeNote=el('div',{class:'caption',role:'status',style:'text-align:left'},'Questions are saved on this device only, not sent to your teacher.');
-    stage.append(modeNote);
-    stage.append(el('div',{style:'display:flex;gap:8px;margin-top:4px'},[name,klass]));
-    const inputs = [];
-    const wrap = el('div',{style:'display:flex;flex-direction:column;gap:8px;margin-top:8px'});
-    for (let i=0;i<5;i++){ const inp = el('input',{type:'text',placeholder:'I wonder...',style:inS+';flex:1;min-width:0','aria-label':`Question ${i+1}`}); inputs.push(inp);
-      wrap.append(el('div',{style:'display:flex;align-items:center;gap:10px'},[ el('div',{class:'q-num',style:'min-width:20px'},(i+1)+'.'), inp ])); }
-    stage.append(wrap);
-    const btn = el('button',{class:'primary',style:'margin-top:2px'},'Save my questions');
+    const inS = 'font-family:var(--font-sans);font-size:14px;padding:10px 12px;border:1px solid var(--borderColor);border-radius:9px;background:#fff;color:var(--textPrimary)';
+    const input = el('input',{type:'text',placeholder:'What question do you still have?',style:inS+';flex:1;min-width:0',autocomplete:'off','aria-label':'Your question'});
+    const btn = el('button',{class:'primary'},'Add question');
+    stage.append(el('div',{style:'display:flex;gap:8px;margin-top:4px;flex-wrap:wrap'},[input, btn]));
     const msg = el('div',{class:'status-line',style:'text-align:left;min-height:0',role:'status','aria-live':'polite'});
-    stage.append(el('div',{style:'display:flex;align-items:center;gap:12px;margin-top:2px'},[btn, msg]));
-    const feed = el('div',{style:'flex:1 1 240px;min-width:0;max-height:210px;overflow:auto;border:1px solid var(--borderColor);border-radius:10px;background:#fff'});
-    const cloud = el('div',{style:'flex:1 1 240px;min-width:0;max-height:210px;overflow:auto;border:1px solid var(--borderColor);border-radius:10px;background:var(--bgMain);padding:10px;text-align:center;align-content:center'});
-    const feedTitle=el('div',{class:'eyebrow-sm',style:'margin-top:14px'},'Saved questions on this device');
-    stage.append(feedTitle);
-    cloud.hidden=true;
-    stage.append(el('div',{style:'display:flex;flex-wrap:wrap;gap:12px;margin-top:6px'},[feed, cloud]));
+    stage.append(msg);
+    const feed = el('div',{style:'margin-top:12px;border:1px solid var(--borderColor);border-radius:10px;background:#fff'});
+    stage.append(feed);
+    const note = el('div',{class:'caption',role:'status',style:'text-align:left;margin-top:6px'},'Saved on this device.');
+    stage.append(note);
     const tParam = new URLSearchParams(location.search).get('teacher');
     if (tParam === '1') { try { localStorage.setItem('classq_teacher','1'); } catch(e){} }
     if (tParam === '0') { try { localStorage.removeItem('classq_teacher'); } catch(e){} }
@@ -1078,49 +1068,36 @@ scenes.push({
       });
       stage.append(el('div',{style:'display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap'},[tCode, clearBtn]), tMsg);
     }
-    const STOP = new Set('the a an is are do does of to in on and or why what how when it they that this for with as be can will if so i we you my me their there not have has was were which at by from more than into out up down one two all some about us our your his her also it’s'.split(' '));
     function paint(items){
       feed.innerHTML='';
-      const qlist=[]; (items||[]).forEach(it => (it.questions||[]).forEach(q => { if(q) qlist.push({q, who:(it.name||'Anon'), kl:(it.klass||'')}); }));
-      if(!qlist.length){ feed.innerHTML='<div class="caption" style="padding:16px">No saved questions yet.</div>'; }
-      else qlist.forEach(r => feed.append(el('div',{style:'padding:8px 11px;border-bottom:1px solid var(--borderSubtle)'},[
-        el('div',{style:'font-size:13.5px;color:var(--textPrimary);line-height:1.4'}, r.q),
-        el('div',{style:'font-family:var(--font-mono);font-size:10px;color:var(--textWarmMuted);margin-top:2px'}, r.who + (r.kl?(' · '+r.kl):'')) ])));
-      const freq={}; (items||[]).forEach(it => (it.questions||[]).forEach(q => (q||'').toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).forEach(w => { if(w.length>2 && !STOP.has(w)) freq[w]=(freq[w]||0)+1; })));
-      const words=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,36);
-      cloud.innerHTML='';
-      if(!words.length){ cloud.innerHTML='<div class="caption">Common words appear here as the class submits.</div>'; }
-      else { const max=words[0][1], pal=['#6366f1','#a855f7','#7c3aed','#4f46e5','#8b5cf6'];
-        words.forEach(([w,n],i)=> cloud.append(el('span',{style:`display:inline-block;margin:3px 7px;font-family:var(--font-sans);font-weight:700;line-height:1.05;font-size:${13+Math.round((n/max)*22)}px;color:${pal[i%pal.length]};opacity:${(0.55+0.45*(n/max)).toFixed(2)}`}, w))); }
+      const qlist=[]; (items||[]).forEach(it => (it.questions||[]).forEach(q => { if(q) qlist.push(q); }));
+      if(!qlist.length){ feed.innerHTML='<div class="caption" style="padding:16px">Your questions appear here.</div>'; return; }
+      qlist.forEach(q => feed.append(el('div',{style:'padding:10px 12px;border-bottom:1px solid var(--borderSubtle);font-size:14px;line-height:1.45;color:var(--textPrimary)'}, q)));
     }
     paint([]);
     function wireLive(){
       if(window._qUnsub){ try{window._qUnsub();}catch(e){} window._qUnsub=null; }
       if(window.ClassQ){
-        const live=window.ClassQ.mode==='live';
-        modeNote.textContent=live?'Questions are shared with your class.':'Questions are saved on this device only, not sent to your teacher.';
-        btn.textContent=live?'Submit my questions':'Save my questions';
-        feedTitle.textContent=live?'Class questions':'Saved questions on this device';
-        cloud.hidden=!live;
+        note.textContent = window.ClassQ.mode==='live' ? 'Shared with your class.' : 'Saved on this device.';
         window._qUnsub = window.ClassQ.subscribe(APP, paint);
       }
     }
     if(window.ClassQ) wireLive(); else window.addEventListener('classq-ready', wireLive, {once:true});
     const BAD=/\b(fuck|shit|bitch|damn|crap|ass|dick|piss)\b/i;
-    btn.addEventListener('click', async () => {
-      const qsv = inputs.map(i=>i.value.trim()).filter(Boolean);
-      if(!name.value.trim() || !klass.value.trim()){ msg.textContent='Add your name and class first.'; msg.classList.remove('complete'); return; }
-      if(!qsv.length){ msg.textContent='Type at least one question first.'; msg.classList.remove('complete'); return; }
-      if(BAD.test(name.value) || BAD.test(klass.value) || qsv.some(q=>BAD.test(q))){ msg.textContent='Keep it school-appropriate, please.'; msg.classList.remove('complete'); return; }
-      btn.disabled=true; btn.textContent='Saving...'; msg.textContent='';
+    async function add(){
+      const q = input.value.trim();
+      if(!q){ msg.textContent='Type a question first.'; msg.classList.remove('complete'); return; }
+      if(BAD.test(q)){ msg.textContent='Keep it school-appropriate, please.'; msg.classList.remove('complete'); return; }
+      btn.disabled=true; msg.textContent='';
       try {
         if(!window.ClassQ) throw new Error('offline');
-        await window.ClassQ.submit({ app:APP, name:name.value.trim(), klass:klass.value.trim(), questions:qsv });
-        btn.textContent=window.ClassQ.mode==='live'?'Submit my questions':'Save my questions'; msg.textContent = (window.ClassQ.mode==='live') ? 'Shared with your class.' : 'Saved on this device. Share your questions with your teacher in class.'; msg.classList.add('complete');
-        inputs.forEach(i=>{i.value='';i.dispatchEvent(new Event('input',{bubbles:true}));});
-        btn.disabled=false;
-      } catch(err){ btn.disabled=false; btn.textContent='Try again'; msg.textContent='Could not save. Try again.'; msg.classList.remove('complete'); }
-    });
+        await window.ClassQ.submit({ app:APP, questions:[q] });
+        input.value=''; input.focus();
+      } catch(err){ msg.textContent='Could not save. Try again.'; msg.classList.remove('complete'); }
+      btn.disabled=false;
+    }
+    btn.addEventListener('click', add);
+    input.addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); add(); } });
   }
 });
 
@@ -1140,7 +1117,7 @@ const CLEAN_COPY=[
   ['Keep the group together','<strong>Move 1 starts on your polyatomic ion chart.</strong> Look up the ion there and copy its formula and charge exactly, then treat it as one unit. Keep its internal subscripts unchanged. Add parentheses only when more than one unit is needed: Ca(NO₃)₂, but NaNO₃.','Predict how many <strong>nitrate units</strong> calcium needs, then check the formula.'],
   ['Binary practice','<strong>Same? Drop them. Different? Switch them. Then reduce if needed.</strong> These compounds use monatomic ions. Equal numbers drop: calcium oxide is CaO, never Ca₂O₂.','Write each formula <strong>before checking</strong>. Use the solution to explain any correction.'],
   ['Polyatomic practice','<strong>Keep each polyatomic ion whole.</strong> Run the same 4 moves with the ion as one unit, and add parentheses only when you need more than one of it.','Write each formula <strong>before checking</strong>. Explain when parentheses are needed.'],
-  ['What are you wondering?','<strong>Recap:</strong> write each ion and its charge, take the numbers with no signs, drop or switch, reduce if needed, and keep polyatomic ions whole. Name one thing you can do and one question you still have.','Write your questions in your notebook. You can also <strong>save them on this device</strong>.']
+  ['What questions do you still have?','<strong>Recap:</strong> write each ion and its charge, take the numbers with no signs, drop or switch, reduce if needed, and keep polyatomic ions whole.','Write the questions you still have in your notebook, then add them here.']
 ];
 const stageEl=$('#stage'), stageLabel=$('#stageLabel'), stepHeadingEl=$('#stepHeading'),
   notesEl=$('#notes'), notebookTextEl=$('#notebookText'), stepIndicator=$('#stepIndicator'),
