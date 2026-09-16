@@ -356,7 +356,7 @@ function ion(name) {
 }
 
 // =====================================================
-//  The solver — the app's single source of truth.
+//  The solver, the app's single source of truth.
 //  Computes lowest-terms counts via LCM internally, which matches
 //  the taught method (switch + reduce): CaO always, never Ca2O2.
 // =====================================================
@@ -384,12 +384,12 @@ const norm = s => (s||'').replace(/[₀-₉]/g, d => String('₀₁₂₃₄₅�
 function assessFormula(value, catName, anName) {
   const v=norm(value), r=solve(catName,anName);
   if (!v) return {state:'no',message:'Enter a formula first.'};
-  if (v===r.formula) return {state:'ok',message:'Correct. The ion ratio is in lowest terms.'};
+  if (v===r.formula) return {state:'ok',message:'Correct. That is the reduced formula.'};
   if (v.toLowerCase()===r.formula.toLowerCase()) return {state:'no',message:'Check capitalization: element symbols are case-sensitive.'};
-  if (r.g>1 && v===r.raw) return {state:'no',message:'Reduce the ion ratio to the smallest whole numbers.'};
-  if (r.a===r.b && r.a>1 && v===unitStr(r.cat,r.a)+unitStr(r.an,r.b)) return {state:'no',message:'Equal charges need one of each ion. Omit subscripts of 1.'};
-  if ((r.cat.poly && r.nc>1)||(r.an.poly && r.na>1)) return {state:'no',message:'Balance the charges and keep repeated polyatomic ions inside parentheses.'};
-  return {state:'no',message:'Check each charge, then find the smallest ratio with a total charge of zero.'};
+  if (r.g>1 && v===r.raw) return {state:'no',message:'Reduce if needed: both subscripts still divide by the same number.'};
+  if (r.a===r.b && r.a>1 && v===unitStr(r.cat,r.a)+unitStr(r.an,r.b)) return {state:'no',message:'Same numbers drop, they never switch. Write one of each ion with no subscripts.'};
+  if ((r.cat.poly && r.nc>1)||(r.an.poly && r.na>1)) return {state:'no',message:'Keep each polyatomic ion whole, and put it in parentheses only when you need more than one of it.'};
+  return {state:'no',message:'Check each charge, then run the 4 moves: numbers with no signs, drop or switch, reduce if needed.'};
 }
 
 // build the copy-down worked solution for any compound
@@ -399,10 +399,10 @@ function workedFor(catName, anName) {
   const catShow = r.cat.poly ? r.cat.token : r.cat.token;
   const romanNote = r.cat.roman ? ` The Roman numeral in the name tells you ${r.cat.name.replace(/\(.*\)/, '').trim()} is ${r.cat.token}${cc}.` : '';
   const move3 = (r.a === r.b)
-    ? `3) Same number (${r.a} and ${r.b}) — drop them: one ${r.cat.token}, one ${r.an.token}.`
-    : `3) Different — switch them: ${subPhrase(r.cat, r.b)}; ${subPhrase(r.an, r.a)}.`;
+    ? `3) Same numbers (${r.a} and ${r.b}), drop them: one ${r.cat.token}, one ${r.an.token}.`
+    : `3) Different, switch them: ${subPhrase(r.cat, r.b)}; ${subPhrase(r.an, r.a)}.`;
   const move4 = (r.a !== r.b && r.g > 1)
-    ? `4) Reduce: both subscripts divide by ${r.g} — ${r.raw} becomes ${r.formula}.`
+    ? `4) Reduce: both subscripts divide by ${r.g}, so ${r.raw} becomes ${r.formula}.`
     : `4) Reduce if needed: ${r.formula} is already reduced.`;
   return [
     `1) Write each ion + its charge: ${r.cat.token}${cc} and ${r.an.token}${ac}.${romanNote}`,
@@ -440,7 +440,7 @@ function drawBulb(ctx, x, y, b) {
 const BOHR_R = [0, 22, 40, 58];
 const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
 // Buzzing electron cloud (same feel as the Atomic Structure app): electrons wander
-// on a random walk with radial breathing and jitter, leaving a fading trail — NOT fixed orbits.
+// on a random walk with radial breathing and jitter, leaving a fading trail, NOT fixed orbits.
 function buzzCloud(nShells) {
   const shells = Array.from({ length: nShells }, () => []);
   return {
@@ -530,11 +530,11 @@ function methodMachine(host, catName, anName, opts={}) {
       (r.cat.roman ? `<div style="font-size:12.5px;color:#b45309;margin-top:6px">The Roman numeral tells you ${r.cat.token} is ${cc}.</div>`:'') },
     { lab:'Move 2 · Numbers, no signs', html:`<b style="font-family:var(--font-mono);font-size:18px">${r.a}</b> and <b style="font-family:var(--font-mono);font-size:18px">${r.b}</b>` },
     { lab:'Move 3 · Same? Drop them. Different? Switch them', html: r.a===r.b
-      ? `${r.a} = ${r.b} → <span class="lcm-badge">drop them</span> — one ${r.cat.token}, one ${r.an.token}`
-      : `<span class="lcm-badge">switch</span> — ${subPhrase(r.cat, r.b)}, ${subPhrase(r.an, r.a)}: ${fmt(r.raw)}` },
+      ? `${r.a} = ${r.b} → <span class="lcm-badge">drop them</span>, one ${r.cat.token}, one ${r.an.token}`
+      : `<span class="lcm-badge">switch</span>, ${subPhrase(r.cat, r.b)}, ${subPhrase(r.an, r.a)}: ${fmt(r.raw)}` },
     { lab:'Move 4 · Reduce if needed', html: (r.a!==r.b && r.g>1)
       ? `divide both by ${r.g}: ${fmt(r.raw)} → <b>${fmt(r.formula)}</b>`
-      : `${fmt(r.formula)} — already reduced` }
+      : `${fmt(r.formula)}, already reduced` }
   ];
   let shown = 0;
   const finalWrap = el('div');
@@ -545,7 +545,7 @@ function methodMachine(host, catName, anName, opts={}) {
     finalWrap.innerHTML='';
     const box = el('div',{class:'m-final'},[
       el('div',{class:'big formula',html:fmt(r.formula)}),
-      el('div',{class:'ok',html:'Charges balance to zero'})
+      el('div',{class:'ok',html:'Check: total positive charge equals total negative charge'})
     ]);
     finalWrap.append(box);
     if (r.a === r.b && r.a > 1) {
@@ -578,7 +578,7 @@ const scenes = [];
 // ---- Step 1: Memory bridge ----
 scenes.push({
   seeLabel: 'Memory bridge',
-  heading: 'Step 1: From Atoms to Ions — Our New Job',
+  heading: 'Step 1: From Atoms to Ions - Our New Job',
   notes: "<strong>Today's one job:</strong> given the NAME of an ionic compound, write its FORMULA. Atoms became <strong>ions</strong> in the Atomic Structure app by <strong>losing</strong> or <strong>gaining</strong> electrons. The <strong>metal keeps its name</strong> (sodium), but the <strong>nonmetal takes an “-ide” ending</strong>: chlorine → chlor<strong>ide</strong>. So sodium + chlorine is <strong>sodium chloride</strong>, and the formula is a headcount of those ions: <strong>NaCl</strong>.",
   notebook: "Press <strong>Replay</strong> and watch the transfer. <strong>Predict and write</strong>: sodium becomes Na<sup>__</sup> and chlorine becomes Cl<sup>__</sup> (which charge each?). Then write the name change: chlorine → ______, so the compound is ______ ______ = <strong>NaCl</strong> (not “sodium chlorine”).",
   build(stage) {
@@ -607,7 +607,7 @@ scenes.push({
         const g=ctx.createRadialGradient(ex,ey,0,ex,ey,12); g.addColorStop(0,'rgba(168,85,247,0.6)'); g.addColorStop(1,'rgba(168,85,247,0)');
         ctx.fillStyle=g; ctx.beginPath(); ctx.arc(ex,ey,12,0,Math.PI*2); ctx.fill();
         ctx.fillStyle='#a855f7'; ctx.beginPath(); ctx.arc(ex,ey,4.5,0,Math.PI*2); ctx.fill(); }
-      // element/ion names — the METAL keeps its name; the NONMETAL takes an -ide ending
+      // element/ion names, the METAL keeps its name; the NONMETAL takes an -ide ending
       ctx.textAlign='center'; ctx.font='700 11px Roboto Mono';
       ctx.fillStyle = done ? '#b45309' : '#57534e';
       ctx.fillText(done ? 'sodium · Na⁺ (cation)' : 'sodium (metal)', NaX, cy+74);
@@ -625,9 +625,9 @@ scenes.push({
 // ---- Step 2: Why ions matter (conductivity + heart) ----
 scenes.push({
   seeLabel: 'Ions & the heart',
-  heading: 'Step 2: Why Ions Matter — The Heart Runs on a K⁺ Balance',
-  notes: "<strong>Free ions carry current</strong> — that is why molten or dissolved salt lights the bulb. Your heartbeat also runs on ions, but it needs a careful <strong>balance</strong>: far more <strong>K<sup style=\"font-size:0.68em\">+</sup> inside</strong> the heart cells than in the blood outside. That gap lets each cell fire and reset in rhythm. Inject a flood of <strong>aqueous KCl</strong> into the blood and the gap disappears — K<sup style=\"font-size:0.68em\">+</sup> piles up outside, the cells cannot reset, and the heart <strong>stops</strong>.",
-  notebook: "<strong>Predict and write</strong>: if you flood the blood with aqueous KCl, what happens to the K<sup style=\"font-size:0.68em\">+</sup> balance — and to the beat? Press <strong>Inject aqueous KCl</strong> and check, then write one sentence on <strong>why</strong> the heart stops.",
+  heading: 'Step 2: Why Ions Matter - The Heart Runs on a K⁺ Balance',
+  notes: "<strong>Free ions carry current</strong>, that is why molten or dissolved salt lights the bulb. Your heartbeat also runs on ions, but it needs a careful <strong>balance</strong>: far more <strong>K<sup style=\"font-size:0.68em\">+</sup> inside</strong> the heart cells than in the blood outside. That gap lets each cell fire and reset in rhythm. Inject a flood of <strong>aqueous KCl</strong> into the blood and the gap disappears, K<sup style=\"font-size:0.68em\">+</sup> piles up outside, the cells cannot reset, and the heart <strong>stops</strong>.",
+  notebook: "<strong>Predict and write</strong>: if you flood the blood with aqueous KCl, what happens to the K<sup style=\"font-size:0.68em\">+</sup> balance, and to the beat? Press <strong>Inject aqueous KCl</strong> and check, then write one sentence on <strong>why</strong> the heart stops.",
   build(stage) {
     const scene=current;
     requireTask('dissolve','Melt / dissolve the salt');
@@ -657,7 +657,7 @@ scenes.push({
     const status = el('div',{class:'status-line'});
     function setStatus(){ status.innerHTML = injected
       ? 'Flooded: K<sup style="font-size:0.68em">+</sup> piles up in the blood, the inside/outside <strong>balance is gone</strong>, and the heart <strong>stops</strong>.'
-      : 'Normal: far more K<sup style="font-size:0.68em">+</sup> <strong>inside</strong> the cells than outside — the heart beats in rhythm.'; }
+      : 'Normal: far more K<sup style="font-size:0.68em">+</sup> <strong>inside</strong> the cells than outside, so the heart beats in rhythm.'; }
     injBtn.addEventListener('click',()=>{ injected=!injected; injLbl(); setStatus(); assignHomes(); });
     currentTick = (dt) => {
       ctx.clearRect(0,0,520,322);
@@ -739,9 +739,9 @@ scenes.push({
 // ---- Step 4: Bohr transfer (model + draw) ----
 scenes.push({
   seeLabel: 'Electron transfer',
-  heading: 'Step 4: The Bohr Reason — Who Loses, Who Gains',
+  heading: 'Step 4: The Bohr Reason - Who Loses, Who Gains',
   notes: "<strong>Metals lose, nonmetals gain.</strong> Every atom “wants” a full outer shell (an octet = stability). A metal has only a few outer electrons, so it <strong>loses</strong> them and becomes a positive <strong>cation</strong>. A nonmetal is nearly full, so it <strong>gains</strong> electrons and becomes a negative <strong>anion</strong>. The number of electrons moved is exactly the <strong>size of the charge</strong>.",
-  notebook: "<strong>Draw the transfer yourself.</strong> Draw the two atoms before, an <strong>arrow</strong> for each electron that moves, and the two ions after with their charges labeled. Then predict: chlorine has 7 outer electrons — will it <strong>lose 7</strong> or <strong>gain 1</strong>, and why is that easier?",
+  notebook: "<strong>Draw the transfer yourself.</strong> Draw the two atoms before, an <strong>arrow</strong> for each electron that moves, and the two ions after with their charges labeled. Then predict: chlorine has 7 outer electrons, will it <strong>lose 7</strong> or <strong>gain 1</strong>, and why is that easier?",
   build(stage) {
     const scene=current;
     const { ctx } = makeCanvas(stage, 520, 300);
@@ -753,7 +753,7 @@ scenes.push({
       onclick(){ key=k; phase='idle'; t=0; moved=0; chips.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.dataset.k===k)); setStatus(); }},k)));
     const status = el('div',{class:'status-line'});
     function setStatus(){ const p=pairs[key]; status.innerHTML = phase==='done'
-      ? `${p.a} lost ${p.moved} → <strong style="color:#d97706">${p.a}<sup style="font-size:0.68em">${p.ca}</sup></strong>, ${p.b} gained ${p.moved} → <strong style="color:#0d9488">${p.b}<sup style="font-size:0.68em">${p.cb}</sup></strong>. Full octets — stable.`
+      ? `${p.a} lost ${p.moved} → <strong style="color:#d97706">${p.a}<sup style="font-size:0.68em">${p.ca}</sup></strong>, ${p.b} gained ${p.moved} → <strong style="color:#0d9488">${p.b}<sup style="font-size:0.68em">${p.cb}</sup></strong>. Full octets, stable.`
       : `${p.a} has ${p.sa[p.sa.length-1]} outer electron(s); ${p.b} needs ${8-p.sb[p.sb.length-1]} to fill its shell.`; }
     const btn = el('button',{class:'primary',html:'Transfer the electron(s) '+ICON.right});
     btn.addEventListener('click',()=>{ if(phase==='idle'){ phase='move'; t=0; moved=0; } });
@@ -785,7 +785,7 @@ scenes.push({
     };
     setStatus();
     stage.append(chips, el('div',{class:'tool-row',style:'margin-top:2px'},[btn]), status,
-      el('div',{class:'caption'},'Try Mg + O to see two electrons cross.'));
+      el('div',{class:'caption'},'Try Mg + O to see two electrons move.'));
   }
 });
 
@@ -793,10 +793,10 @@ scenes.push({
 scenes.push({
   seeLabel: 'Periodic table',
   heading: 'Step 5: Meet the Ions and Their Charges',
-  notes: "<strong>Position tells you the charge.</strong> On the periodic table an element's <strong>column (group)</strong> sets its ion charge: <strong>Group 1 = 1+, Group 2 = 2+, Al = 3+; Group 16 = 2−, Group 17 = 1−</strong>. <strong>Transition metals</strong> vary — the <strong>Roman numeral</strong> in the name gives the charge. <strong>Polyatomic ions</strong> aren't on the table; find them on your reference sheet.",
+  notes: "<strong>Position tells you the charge.</strong> On the periodic table an element's <strong>column (group)</strong> sets its ion charge: <strong>Group 1 = 1+, Group 2 = 2+, Al = 3+; Group 16 = 2−, Group 17 = 1−</strong>. <strong>Transition metals</strong> vary, the <strong>Roman numeral</strong> in the name gives the charge. <strong>Polyatomic ions</strong> aren't on the table; find them on your reference sheet.",
   notebook: "Find <strong>Iron</strong> on the table and tap it. <strong>Predict and write</strong> the charge of <strong>iron</strong> and of <strong>oxide</strong>. Then jot the rule: a main-group ion's charge comes from its <strong>column</strong>; a transition metal's comes from the <strong>Roman numeral</strong> in its name.",
   build(stage) {
-    // periods 1–4 (the pattern + all our transition metals); heavier ions sit lower in the same columns (appendix)
+    // periods 1-4 (the pattern + all our transition metals); heavier ions sit lower in the same columns (appendix)
     const PT = [
       ['H',1,1],['He',18,1],
       ['Li',1,2],['Be',2,2],['B',13,2],['C',14,2],['N',15,2],['O',16,2],['F',17,2],['Ne',18,2],
@@ -816,10 +816,10 @@ scenes.push({
       const cat=catFor(g), c=chargeFor(sym,g), nm=NAME[sym]||sym;
       cell.classList.add('on');
       cell.querySelector('.pt-chg').innerHTML = (cat==='tr'&&c===null)?'?':chg(c);
-      if (cat==='tr' && c===null) read.innerHTML = `<strong style="color:#7c3aed">${nm} (${sym})</strong> — transition metal · charge comes from the <strong>Roman numeral</strong> in the name (Iron(III) = Fe<sup>3+</sup>).`;
-      else if (sym==='Zn') read.innerHTML = `<strong style="color:#7c3aed">Zinc (Zn)</strong> — a transition metal that is always <strong>2+</strong>.`;
-      else if (cat==='cat') read.innerHTML = `<strong style="color:#b45309">${nm} (${sym})</strong> — Group ${g} metal · loses ${c} e⁻ → <span class="ion-chip cat" style="font-size:15px;padding:3px 8px">${sym}<sup>${chg(c)}</sup></span>`;
-      else if (cat==='an') read.innerHTML = `<strong style="color:#0f766e">${nm} (${sym})</strong> — Group ${g} nonmetal · gains ${-c} e⁻ → <span class="ion-chip an" style="font-size:15px;padding:3px 8px">${sym}<sup>${chg(c)}</sup></span>`;
+      if (cat==='tr' && c===null) read.innerHTML = `<strong style="color:#7c3aed">${nm} (${sym})</strong>, transition metal · charge comes from the <strong>Roman numeral</strong> in the name (Iron(III) = Fe<sup>3+</sup>).`;
+      else if (sym==='Zn') read.innerHTML = `<strong style="color:#7c3aed">Zinc (Zn)</strong>, a transition metal that is always <strong>2+</strong>.`;
+      else if (cat==='cat') read.innerHTML = `<strong style="color:#b45309">${nm} (${sym})</strong>, Group ${g} metal · loses ${c} e⁻ → <span class="ion-chip cat" style="font-size:15px;padding:3px 8px">${sym}<sup>${chg(c)}</sup></span>`;
+      else if (cat==='an') read.innerHTML = `<strong style="color:#0f766e">${nm} (${sym})</strong>, Group ${g} nonmetal · gains ${-c} e⁻ → <span class="ion-chip an" style="font-size:15px;padding:3px 8px">${sym}<sup>${chg(c)}</sup></span>`;
     }
     const grid = el('div',{class:'ptable'});
     const headers = {1:'1+',2:'2+',13:'3+',14:'',15:'3−',16:'2−',17:'1−',18:'0'};
@@ -834,8 +834,8 @@ scenes.push({
       grid.append(cell);
     });
     stage.append(el('div',{class:'pt-wrap'},[grid]), read);
-    // polyatomics — separate chart, from the appendix reference sheet
-    stage.append(el('div',{class:'eyebrow-sm',style:'text-align:center;margin-top:12px'},'Polyatomic ions — not on the table · from your reference sheet'));
+    // polyatomics, separate chart, from the appendix reference sheet
+    stage.append(el('div',{class:'eyebrow-sm',style:'text-align:center;margin-top:12px'},'Polyatomic ions, not on the table · from your reference sheet'));
     const poly = ['Ammonium','Hydroxide','Nitrate','Sulfate','Carbonate','Phosphate'];
     poly.forEach(n=>requireTask('ion:'+n,'Reveal '+n.toLowerCase()+"'s charge"));
     stage.append(el('div',{class:'ion-grid'}, poly.map(n=>{ const P=POLY[n]; const t=el('button',{class:'tile '+(P.cat?'cat':'an'),style:'min-width:78px','aria-label':`Reveal ${n}'s ion charge`},[el('div',{class:'sym',style:'font-size:14px',html:fmt(P.f)}),el('div',{class:'charge'},''),el('div',{class:'nm'},n)]);
@@ -847,8 +847,8 @@ scenes.push({
 // ---- Step 6: THE METHOD ----
 scenes.push({
   seeLabel: 'Method machine',
-  heading: 'Step 6: The Method — The 4 Moves',
-  notes: "<strong>The 4 moves (memorize):</strong> 1) Write each ion + its charge. 2) Numbers, no signs. 3) <strong>Same? Drop them. Different? Switch them</strong> — each number becomes the OTHER ion's subscript. 4) <strong>Reduce if needed.</strong> Equal numbers drop, so Calcium oxide is <strong>CaO, never Ca₂O₂</strong>. Tin(IV) oxide switches to Sn₂O₄, then reduces to <strong>SnO₂</strong>.",
+  heading: 'Step 6: The Method - The 4 Moves',
+  notes: "<strong>The 4 moves (memorize):</strong> 1) Write each ion + its charge. 2) Numbers, no signs. 3) <strong>Same? Drop them. Different? Switch them</strong>, each number becomes the OTHER ion's subscript. 4) <strong>Reduce if needed.</strong> Equal numbers drop, so Calcium oxide is <strong>CaO, never Ca₂O₂</strong>. Tin(IV) oxide switches to Sn₂O₄, then reduces to <strong>SnO₂</strong>.",
   notebook: "Calcium is 2+ and oxide is 2−. The numbers match. <strong>Predict and write</strong>: is the formula <strong>CaO</strong> or <strong>Ca₂O₂</strong>? Then copy the 4 moves, and run <strong>Tin(IV) oxide</strong> to watch Move 4 do its job.",
   build(stage) {
     const host = el('div');
@@ -876,9 +876,9 @@ scenes.push({
 // ---- Step 8: Transition metals ----
 scenes.push({
   seeLabel: 'Roman numeral',
-  heading: 'Step 8: Transition Metals — The Roman Numeral IS the Charge',
-  notes: "<strong>The Roman numeral in the name = the metal’s charge.</strong> Transition metals can carry more than one charge, so the name tells you which — never guess. <strong>Iron(II) oxide = FeO; Iron(III) oxide = Fe₂O₃; Copper(I) chloride = CuCl; Copper(II) chloride = CuCl₂.</strong> Read the charge off the numeral, then run the same 4 moves.",
-  notebook: "Iron(III) oxide: the (III) means iron is 3+, oxide is 2−. <strong>Predict and write</strong> the finished formula — FeO, Fe₂O₃, or Fe₃O₂ — before the machine runs. Then copy: Iron(II) oxide = ____, Iron(III) oxide = ____.",
+  heading: 'Step 8: Transition Metals - The Roman Numeral IS the Charge',
+  notes: "<strong>The Roman numeral in the name = the metal’s charge.</strong> Transition metals can carry more than one charge, so the name tells you which, never guess. <strong>Iron(II) oxide = FeO; Iron(III) oxide = Fe₂O₃; Copper(I) chloride = CuCl; Copper(II) chloride = CuCl₂.</strong> Read the charge off the numeral, then run the same 4 moves.",
+  notebook: "Iron(III) oxide: the (III) means iron is 3+, oxide is 2−. <strong>Predict and write</strong> the finished formula, FeO, Fe₂O₃, or Fe₃O₂, before the machine runs. Then copy: Iron(II) oxide = ____, Iron(III) oxide = ____.",
   build(stage) {
     const set = [['Iron(II)','Oxide','Iron(II) oxide'],['Iron(III)','Oxide','Iron(III) oxide'],['Copper(I)','Chloride','Copper(I) chloride'],['Copper(II)','Chloride','Copper(II) chloride']];
     set.forEach(([c,a])=>requireTask('method:'+c+'|'+a,c+' '+a.toLowerCase()+' - reveal all four moves and the formula'));
@@ -892,7 +892,7 @@ scenes.push({
 // ---- Step 9: Polyatomic ions ----
 scenes.push({
   seeLabel: 'Parentheses gate',
-  heading: 'Step 9: Polyatomic Ions — Keep the Group Together',
+  heading: 'Step 9: Polyatomic Ions - Keep the Group Together',
   notes: "<strong>A polyatomic ion moves as ONE piece with one charge</strong> (NO₃⁻, SO₄²⁻, OH⁻, PO₄³⁻, NH₄⁺). Run the same 4 moves treating the whole group as a unit. Use <strong>parentheses only when its count is 2 or more</strong>: Sodium nitrate = <strong>NaNO₃</strong> (no parens), Calcium nitrate = <strong>Ca(NO₃)₂</strong>. Never split the atoms inside a polyatomic ion.",
   notebook: "Calcium nitrate: calcium is 2+, nitrate (NO₃⁻) is 1−. <strong>Predict and write</strong> how many nitrate UNITS you need, and whether the formula needs parentheses, before the machine runs. Then copy: Sodium nitrate = ____, Calcium nitrate = ____, Magnesium hydroxide = ____.",
   build(stage) {
@@ -936,9 +936,9 @@ function practiceStep(stage, items) {
     solution.hidden=!q.revealed;
     const steps=[
       `<span class="ion-chip cat">${fmt(r.cat.token)}<sup>${chg(r.cat.charge)}</sup></span> + <span class="ion-chip an">${fmt(r.an.token)}<sup>${chg(r.an.charge)}</sup></span>`,
-      `Use the charge magnitudes: <strong>${r.a}</strong> and <strong>${r.b}</strong>.`,
-      r.a===r.b ? 'Equal magnitudes: use one of each ion.' : `Switch the numbers: ${fmt(r.raw)}.`,
-      r.g>1 && r.a!==r.b ? `Divide the ion counts by ${r.g}: ${fmt(r.formula)}.` : 'The ion ratio is already in lowest terms.'
+      `Numbers, no signs: <strong>${r.a}</strong> and <strong>${r.b}</strong>.`,
+      r.a===r.b ? `Same numbers, so they drop: one ${fmt(r.cat.token)}, one ${fmt(r.an.token)}.` : `Different, so switch them: ${fmt(r.raw)}.`,
+      r.g>1 && r.a!==r.b ? `Reduce: both subscripts divide by ${r.g}, so ${fmt(r.raw)} becomes ${fmt(r.formula)}.` : `Reduce if needed: ${fmt(r.formula)} is already reduced.`
     ];
     solution.append(el('ol',{},steps.map(html=>el('li',{html}))),el('span',{class:'formula',html:fmt(r.formula)}));
     const fill=el('div',{class:'pb-fill'}),progress=el('div',{class:'pb-text',role:'status'});
@@ -985,8 +985,8 @@ function practiceStep(stage, items) {
 // ---- Step 10: Practice A (binary + transition) ----
 scenes.push({
   seeLabel: 'Practice A',
-  heading: 'Step 10: Practice A — Binary & Transition (10 Questions)',
-  notes: "<strong>Isolate the method.</strong> These ten are all binary — main-group metals and transition metals — with <strong>no polyatomics yet</strong>. Watch the equal-number traps: Calcium oxide is <strong>CaO</strong>, Magnesium oxide is <strong>MgO</strong>, never Ca₂O₂ or Mg₂O₂.",
+  heading: 'Step 10: Practice A - Binary & Transition (10 Questions)',
+  notes: "<strong>Isolate the method.</strong> These ten are all binary, main-group metals and transition metals, with <strong>no polyatomics yet</strong>. Watch the equal-number traps: Calcium oxide is <strong>CaO</strong>, Magnesium oxide is <strong>MgO</strong>, never Ca₂O₂ or Mg₂O₂.",
   notebook: "Number your page <strong>1 to 10</strong>. Write your formula for each <strong>before</strong> you check it, then copy the 4-move solution underneath and fix anything you missed.",
   build(stage) {
     practiceStep(stage, [
@@ -1007,8 +1007,8 @@ scenes.push({
 // ---- Step 11: Practice B (polyatomic mixed) ----
 scenes.push({
   seeLabel: 'Practice B',
-  heading: 'Step 11: Practice B — Polyatomic Mixed (10 Questions)',
-  notes: "<strong>Everything at once.</strong> These mix polyatomic ions with transition metals — the hardest, most realistic cases. Keep each polyatomic <strong>whole</strong>, run the same 4 moves, and add <strong>parentheses only when the unit count is 2 or more</strong>. Sodium nitrate stays <strong>NaNO₃</strong>; Calcium nitrate becomes <strong>Ca(NO₃)₂</strong>.",
+  heading: 'Step 11: Practice B - Polyatomic Mixed (10 Questions)',
+  notes: "<strong>Everything at once.</strong> These mix polyatomic ions with transition metals, the hardest, most realistic cases. Keep each polyatomic <strong>whole</strong>, run the same 4 moves, and add <strong>parentheses only when the unit count is 2 or more</strong>. Sodium nitrate stays <strong>NaNO₃</strong>; Calcium nitrate becomes <strong>Ca(NO₃)₂</strong>.",
   notebook: "Number <strong>1 to 10</strong>. Predict how many will NEED parentheses (unit count ≥ 2), then check as you go. Copy each 4-move solution and note one line: “A parentheses mistake I need to watch is ____.”",
   build(stage) {
     practiceStep(stage, [
@@ -1030,7 +1030,7 @@ scenes.push({
 scenes.push({
   seeLabel: 'Your questions',
   heading: 'Step 12: What Are You Wondering?',
-  notes: "<strong>You can now write any ionic formula.</strong> You read the charges (group position or Roman numeral), <strong>dropped or switched</strong> the numbers, reduced when needed, kept polyatomic ions whole, and added parentheses only when the count passed 1. Next cycle we run it in reverse — <strong>formula back to name</strong> — and watch these ions <strong>react</strong>. Post what is still fuzzy so we hit it first.",
+  notes: "<strong>You can now write any ionic formula.</strong> You read the charges (group position or Roman numeral), <strong>dropped or switched</strong> the numbers, reduced when needed, kept polyatomic ions whole, and added parentheses only when the count passed 1. Next cycle we run it in reverse, <strong>formula back to name</strong>, and watch these ions <strong>react</strong>. Post what is still fuzzy so we hit it first.",
   notebook: "Write <strong>5 questions</strong> in your notebook, then type them here and hit <strong>Submit</strong>. Finish two lines: “One thing I can now DO: ____” and “My question for the class: ____.”",
   build(stage) {
     const APP = 'Ionic Formulas';
@@ -1128,15 +1128,15 @@ const CLEAN_COPY=[
   ['From atoms to ions','<strong>Write a formula from a compound name.</strong> Metals keep their names; monatomic nonmetals end in <strong>-ide</strong>. Sodium chloride is <strong>NaCl</strong>: one sodium ion for each chloride ion.','<strong>Predict the charges</strong> on Na and Cl, then replay the transfer and write the compound name.'],
   ['Ions and the heart','<strong>Mobile ions carry current.</strong> Dissolved or molten salts conduct. Heart cells also depend on ion gradients; excess potassium outside the cells disrupts their electrical rhythm.','<strong>Predict</strong> how excess K⁺ outside heart cells changes their rhythm, then test the model.'],
   ['What ionic means','<strong>An ionic compound contains cations and anions.</strong> A cation is positive; an anion is negative. Their electrostatic attraction is the <strong>ionic bond</strong>. Metals and nonmetals are common partners, but polyatomic ions can participate too.','Define <strong>ion, cation, anion, and ionic bond</strong> in your own words.'],
-  ['Who loses, who gains','<strong>Metals commonly lose electrons; nonmetals commonly gain them.</strong> Losing electrons makes a cation; gaining them makes an anion. For these monatomic ions, the number transferred gives the charge magnitude.','Draw each electron transferred and label the resulting charges. Predict whether chlorine <strong>loses seven or gains one</strong>.'],
+  ['Who loses, who gains','<strong>Metals commonly lose electrons; nonmetals commonly gain them.</strong> Losing electrons makes a cation; gaining them makes an anion. For these monatomic ions, the number of electrons transferred sets the charge: lose 2, become 2+.','Draw each electron transferred and label the resulting charges. Predict whether chlorine <strong>loses seven or gains one</strong>.'],
   ['Find the charges','<strong>Common monatomic ions:</strong> Group 1 is 1+, Group 2 is 2+, and Al is 3+. Groups 15, 16, and 17 are 3−, 2−, and 1−. Use the name or reference sheet for variable-charge metals and polyatomic ions.','Tap iron and oxygen. Explain why <strong>iron needs a Roman numeral</strong> but oxide does not.'],
-  ['The four moves','<strong>1.</strong> Write the ions and charges. <strong>2.</strong> Use the magnitudes, not the signs. <strong>3.</strong> Equal? Use one of each. Different? Switch. <strong>4.</strong> Reduce the ion ratio.','Predict <strong>CaO or Ca₂O₂</strong>, then run the machine. Try tin(IV) oxide to test reduction.'],
-  ['Binary compounds','<strong>Total charge must be zero.</strong> Use the smallest whole-number ratio: MgCl₂ is 1:2; Al₂O₃ is 2:3. Equal charge magnitudes give a 1:1 ratio.','Write the ions, charges, and formula <strong>before</strong> running each example.'],
-  ['Roman numerals','<strong>The Roman numeral gives the metal ion charge.</strong> Iron(II) is Fe²⁺; iron(III) is Fe³⁺. Balance that charge with the anion.','Predict <strong>iron(III) oxide</strong>, then compare it with iron(II) oxide.'],
+  ['The four moves','<strong>1.</strong> Write each ion + its charge. <strong>2.</strong> Numbers, no signs. <strong>3.</strong> Same? Drop them. Different? Switch them, so each number becomes the other ion\'s subscript. <strong>4.</strong> Reduce if needed. Equal numbers drop, they never switch: calcium oxide is CaO, never Ca₂O₂.','Predict <strong>CaO or Ca₂O₂</strong>, then run the machine. Try tin(IV) oxide to watch Sn₂O₄ reduce to SnO₂.'],
+  ['Binary compounds','<strong>Same 4 moves, new numbers.</strong> Magnesium chloride: 2 and 1 are different, switch them, MgCl₂. Aluminum oxide: 3 and 2, switch them, Al₂O₃. Calcium oxide: 2 and 2 are the same, drop them, CaO.','Write the ions, charges, and formula <strong>before</strong> running each example.'],
+  ['Roman numerals','<strong>The Roman numeral gives the metal ion charge.</strong> Iron(II) is Fe²⁺; iron(III) is Fe³⁺. Read the charge off the numeral, then run the same 4 moves.','Predict <strong>iron(III) oxide</strong>, then compare it with iron(II) oxide.'],
   ['Keep the group together','<strong>A polyatomic ion is one unit.</strong> Keep its internal subscripts unchanged. Add parentheses only when more than one unit is needed: Ca(NO₃)₂, but NaNO₃.','Predict how many <strong>nitrate units</strong> calcium needs, then check the formula.'],
-  ['Binary practice','<strong>Balance, then reduce.</strong> These compounds use monatomic ions. Equal charge magnitudes give one of each ion.','Write each formula <strong>before checking</strong>. Use the solution to explain any correction.'],
-  ['Polyatomic practice','<strong>Keep each polyatomic ion whole.</strong> Balance its charge with the metal or ammonium ion, then use parentheses for repeated units.','Write each formula <strong>before checking</strong>. Explain when parentheses are needed.'],
-  ['What are you wondering?','<strong>Recap:</strong> identify the charges, balance to zero, reduce the ratio, and keep polyatomic ions intact. Name one thing you can do and one question you still have.','Write your questions in your notebook. You can also <strong>save them on this device</strong>.']
+  ['Binary practice','<strong>Same? Drop them. Different? Switch them. Then reduce if needed.</strong> These compounds use monatomic ions. Equal numbers drop: calcium oxide is CaO, never Ca₂O₂.','Write each formula <strong>before checking</strong>. Use the solution to explain any correction.'],
+  ['Polyatomic practice','<strong>Keep each polyatomic ion whole.</strong> Run the same 4 moves with the ion as one unit, and add parentheses only when you need more than one of it.','Write each formula <strong>before checking</strong>. Explain when parentheses are needed.'],
+  ['What are you wondering?','<strong>Recap:</strong> write each ion and its charge, take the numbers with no signs, drop or switch, reduce if needed, and keep polyatomic ions whole. Name one thing you can do and one question you still have.','Write your questions in your notebook. You can also <strong>save them on this device</strong>.']
 ];
 const stageEl=$('#stage'), stageLabel=$('#stageLabel'), stepHeadingEl=$('#stepHeading'),
   notesEl=$('#notes'), notebookTextEl=$('#notebookText'), stepIndicator=$('#stepIndicator'),
@@ -1188,7 +1188,7 @@ function setScene(i,focus=false) {
   const shortTitle = s.heading.replace(/^Step \d+:\s*/, '');
   stageLabel.textContent = s.seeLabel || 'What you see';
   const copy=CLEAN_COPY[i];
-  stepHeadingEl.textContent = copy?copy[0]:shortTitle.replace(/\s*[—-]\s*/g,' - ');
+  stepHeadingEl.textContent = copy?copy[0]:shortTitle.replace(/\s*[ - -]\s*/g,' - ');
   stepNumEl.textContent = 'Step ' + pad2(i+1);
   stepTitleEl.textContent = shortTitle;
   notesEl.innerHTML = copy?copy[1]:s.notes; notebookTextEl.innerHTML = copy?copy[2]:s.notebook;
